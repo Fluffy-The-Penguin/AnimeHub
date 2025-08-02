@@ -956,14 +956,32 @@
             font-size: 0.9rem;
         }
         .status-select {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: rgba(0, 0, 0, 0.2);
-            color: var(--light);
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--light);
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+}
+.status-select option {
+    background: var(--darker);
+    color: var(--light);
+    padding: 8px;
+}
+
+.status-select:focus {
+    outline: none;
+    border-color: var(--secondary);
+}
         .list-item-btn {
             padding: 8px 12px;
             border-radius: 6px;

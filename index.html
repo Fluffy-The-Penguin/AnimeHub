@@ -955,7 +955,7 @@
             color: var(--light);
             font-size: 0.9rem;
         }
-        .status-select {
+       .status-select {
     padding: 8px 12px;
     border-radius: 6px;
     border: 1px solid var(--border);
@@ -971,6 +971,12 @@
     background-repeat: no-repeat;
     background-position: right 8px center;
     background-size: 12px;
+    /* Add these new properties */
+    padding-right: 25px; /* Make room for dropdown arrow */
+    text-overflow: ellipsis; /* Handle long text gracefully */
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden; /* Hide overflow */
+    min-width: 120px; /* Ensure minimum width */
 }
 .status-select option {
     background: var(--darker);
@@ -985,6 +991,8 @@
 .status-select option {
     background: var(--darker) !important;
     color: var(--light) !important;
+    padding: 8px;
+    white-space: normal; /* Allow text to wrap in dropdown */
 }
         .list-item-btn {
             padding: 8px 12px;
@@ -1871,16 +1879,16 @@
 
         // Get status text
         function getStatusText(status) {
-    const statusMap = {
-        'planning': 'Planning',
-        'watching': 'Watching',
-        'reading': 'Reading',
-        'completed': 'Completed',
-        'paused': 'Paused',
-        'dropped': 'Dropped'
-    };
-    return statusMap[status] || status;
-}
+            const statusMap = {
+                'planning': 'Planning',
+                'watching': 'Watching',
+                'reading': 'Reading',
+                'completed': 'Completed',
+                'paused': 'Paused',
+                'dropped': 'Dropped'
+            };
+            return statusMap[status] || status;
+        }
 
         // Load content based on current tab
         function loadContent() {
@@ -2053,7 +2061,6 @@
             contentArea.innerHTML = `
                 <div class="section-header">
                     <h2 class="section-title"><i class="fas fa-tv"></i> Anime</h2>
-                    <a href="#" class="view-all">View All</a>
                 </div>
                 <div class="cards-grid" id="anime-grid">
                     <div class="loading">
@@ -2158,7 +2165,6 @@
             contentArea.innerHTML = `
                 <div class="section-header">
                     <h2 class="section-title"><i class="fas fa-book"></i> Manga</h2>
-                    <a href="#" class="view-all">View All</a>
                 </div>
                 <div class="cards-grid" id="manga-grid">
                     <div class="loading">
@@ -2264,7 +2270,6 @@
                 <div class="section-header">
                     <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Seasonal Anime</h2>
                     <div class="season-info" id="season-info"></div>
-                    <a href="#" class="view-all">View All</a>
                 </div>
                 <div class="cards-grid" id="seasonal-grid">
                     <div class="loading">
@@ -2272,12 +2277,15 @@
                         <p>Loading seasonal content...</p>
                     </div>
                 </div>
+                <div class="pagination" id="seasonal-pagination">
+                    <!-- Pagination will be added here -->
+                </div>
             `;
-            loadSeasonalPage();
+            loadSeasonalPage(1);
         }
 
         // Load seasonal page with debugging
-        async function loadSeasonalPage() {
+        async function loadSeasonalPage(page) {
             try {
                 const now = new Date();
                 const currentMonth = now.getMonth();
@@ -2314,7 +2322,7 @@
                     seasonYear: year,
                     type: 'ANIME',
                     sort: 'POPULARITY_DESC',
-                    page: 1,
+                    page: page,
                     perPage: 24
                 };
 
@@ -2347,6 +2355,12 @@
                                 $sort: [MediaSort]
                             ) {
                                 Page(page: $page, perPage: $perPage) {
+                                    pageInfo {
+                                        total
+                                        currentPage
+                                        lastPage
+                                        hasNextPage
+                                    }
                                     media(
                                         season: $season
                                         seasonYear: $seasonYear
@@ -2384,6 +2398,7 @@
 
                 if (data.data && data.data.Page && data.data.Page.media && data.data.Page.media.length > 0) {
                     renderCards(data.data.Page.media, 'seasonal-grid');
+                    renderPagination(data.data.Page.pageInfo, 'seasonal');
                 } else {
                     document.getElementById('seasonal-grid').innerHTML = `
                         <div class="empty-state">
@@ -3169,7 +3184,7 @@ async function updateStatus(id, type, newStatus) {
         function renderPagination(pageInfo, type) {
             const paginationContainer = document.getElementById(`${type}-pagination`);
             if (!paginationContainer) return;
-            if (pageInfo.lastPage <= 1) {
+            if (!pageInfo || pageInfo.lastPage <= 1) {
                 paginationContainer.innerHTML = '';
                 return;
             }
@@ -3211,6 +3226,8 @@ async function updateStatus(id, type, newStatus) {
                 loadAnimePage(page);
             } else if (type === 'manga') {
                 loadMangaPage(page);
+            } else if (type === 'seasonal') {
+                loadSeasonalPage(page);
             }
         }
 

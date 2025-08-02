@@ -323,6 +323,10 @@
             background: rgba(78, 205, 196, 0.2);
             color: var(--secondary);
         }
+        .status-reading {
+            background: rgba(78, 205, 196, 0.2);
+            color: var(--secondary);
+        }
         .status-completed {
             background: rgba(46, 204, 113, 0.2);
             color: var(--success);
@@ -588,6 +592,15 @@
         }
         .action-btn.secondary:hover {
             background: rgba(78, 205, 196, 0.4);
+        }
+        .action-btn.favorite {
+            background: rgba(231, 76, 60, 0.2);
+        }
+        .action-btn.favorite:hover {
+            background: rgba(231, 76, 60, 0.4);
+        }
+        .action-btn.favorite.active {
+            background: var(--danger);
         }
         .progress-container {
             margin-top: 15px;
@@ -1074,17 +1087,9 @@
             <div class="content-section" id="content-area">
                 <!-- Content will be loaded here dynamically -->
             </div>
-            <div class="sidebar">
-                <div class="sidebar-card">
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-card" id="sidebar-filters">
                     <h3 class="sidebar-title"><i class="fas fa-filter"></i> Filters</h3>
-                    <div class="filter-group">
-                        <label for="type">Type</label>
-                        <select id="type">
-                            <option value="ALL">All Types</option>
-                            <option value="ANIME">Anime</option>
-                            <option value="MANGA">Manga</option>
-                        </select>
-                    </div>
                     <div class="filter-group">
                         <label for="format">Format</label>
                         <select id="format">
@@ -1175,6 +1180,7 @@
         let mangaList = [];
         let animeListFromApi = [];
         let mangaListFromApi = [];
+        let favoritesList = [];
         // DOM Elements
         const contentArea = document.getElementById('content-area');
         const searchInput = document.getElementById('search-input');
@@ -1194,6 +1200,8 @@
         const loginBtn = document.getElementById('login-btn');
         const userName = document.getElementById('user-name');
         const userSince = document.getElementById('user-since');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarFilters = document.getElementById('sidebar-filters');
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', () => {
@@ -1209,7 +1217,18 @@
             loadProfileStats();
             // Check if user is already logged in
             checkLoginStatus();
+            // Hide filters for home, favorites and lists
+            updateSidebarFilters();
         });
+
+        // Update sidebar filters visibility based on current tab
+        function updateSidebarFilters() {
+            if (['anime', 'manga', 'seasonal'].includes(currentTab)) {
+                sidebarFilters.style.display = 'block';
+            } else {
+                sidebarFilters.style.display = 'none';
+            }
+        }
 
         // Set up event listeners
         function setupEventListeners() {
@@ -1220,6 +1239,8 @@
                     document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
                     tab.classList.add('active');
                     currentTab = tab.dataset.tab;
+                    currentPage = 1; // Reset to first page when switching tabs
+                    updateSidebarFilters();
                     loadContent();
                 });
             });
@@ -1270,6 +1291,8 @@
                         if (tabLink) {
                             tabLink.classList.add('active');
                             currentTab = tab;
+                            currentPage = 1;
+                            updateSidebarFilters();
                             loadContent();
                             dropdownContent.classList.remove('show');
                         }
@@ -1277,7 +1300,6 @@
                 });
             });
             // Filter changes
-            document.getElementById('type').addEventListener('change', loadContent);
             document.getElementById('format').addEventListener('change', loadContent);
             document.getElementById('year').addEventListener('change', loadContent);
             document.getElementById('status').addEventListener('change', loadContent);
@@ -1671,7 +1693,6 @@
 
         // Load favorites display
         function loadFavoritesDisplay() {
-            // Remove hardcoded sample favorites - only show real favorites from user
             favoritesDisplay.innerHTML = '<div class="empty-state"><i class="fas fa-heart"></i><p>No favorites yet</p></div>';
         }
 
@@ -1877,7 +1898,6 @@
         // Load anime page
         async function loadAnimePage(page) {
             try {
-                const type = document.getElementById('type').value;
                 const format = document.getElementById('format').value;
                 const year = document.getElementById('year').value;
                 const status = document.getElementById('status').value;
@@ -1889,7 +1909,6 @@
                     perPage: 24,
                     type: 'ANIME'
                 };
-                if (type !== 'ALL') variables.type = type;
                 if (format !== 'ALL') variables.format = format;
                 if (year) variables.seasonYear = parseInt(year);
                 if (status !== 'ALL') variables.status = status;
@@ -1931,6 +1950,7 @@
                                         averageScore
                                         episodes
                                         seasonYear
+                                        format
                                     }
                                 }
                             }
@@ -1977,7 +1997,6 @@
         // Load manga page
         async function loadMangaPage(page) {
             try {
-                const type = document.getElementById('type').value;
                 const format = document.getElementById('format').value;
                 const year = document.getElementById('year').value;
                 const status = document.getElementById('status').value;
@@ -1989,7 +2008,6 @@
                     perPage: 24,
                     type: 'MANGA'
                 };
-                if (type !== 'ALL') variables.type = type;
                 if (format !== 'ALL') variables.format = format;
                 if (year) variables.seasonYear = parseInt(year);
                 if (status !== 'ALL') variables.status = status;
@@ -2031,6 +2049,7 @@
                                         averageScore
                                         chapters
                                         seasonYear
+                                        format
                                     }
                                 }
                             }
@@ -2054,93 +2073,148 @@
             }
         }
 
-        // Load seasonal content
-        function loadSeasonalContent() {
-            contentArea.innerHTML = `
-                <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Seasonal</h2>
-                    <a href="#" class="view-all">View All</a>
-                </div>
-                <div class="cards-grid" id="seasonal-grid">
-                    <div class="loading">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading seasonal content...</p>
-                    </div>
-                </div>
-            `;
-            loadSeasonalPage();
+// Load seasonal content
+function loadSeasonalContent() {
+    contentArea.innerHTML = `
+        <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Seasonal Anime</h2>
+            <div class="season-info" id="season-info"></div>
+            <a href="#" class="view-all">View All</a>
+        </div>
+        <div class="cards-grid" id="seasonal-grid">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading seasonal content...</p>
+            </div>
+        </div>
+    `;
+    loadSeasonalPage();
+}
+
+// Load seasonal page with debugging
+async function loadSeasonalPage() {
+    try {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        let season, year;
+        
+        // Determine current season and year
+        if (currentMonth >= 2 && currentMonth <= 4) {  // March-May
+            season = 'SPRING';
+            year = now.getFullYear();
+        } else if (currentMonth >= 5 && currentMonth <= 7) {  // June-August
+            season = 'SUMMER';
+            year = now.getFullYear();
+        } else if (currentMonth >= 8 && currentMonth <= 10) {  // September-November
+            season = 'FALL';
+            year = now.getFullYear();
+        } else {  // December-February
+            season = 'WINTER';
+            year = (currentMonth === 0 || currentMonth === 1) ? now.getFullYear() : now.getFullYear() + 1;
         }
 
-        // Load seasonal page
-        async function loadSeasonalPage() {
-            try {
-                const now = new Date();
-                const currentMonth = now.getMonth();
-                let season = '';
-                let year = now.getFullYear();
-                if (currentMonth >= 2 && currentMonth <= 4) {
-                    season = 'SPRING';
-                } else if (currentMonth >= 5 && currentMonth <= 7) {
-                    season = 'SUMMER';
-                } else if (currentMonth >= 8 && currentMonth <= 10) {
-                    season = 'FALL';
-                } else {
-                    season = 'WINTER';
-                    // If it's winter, we might need to adjust the year
-                    if (currentMonth === 0) year -= 1;
-                }
-                const response = await fetch('https://graphql.anilist.co', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        query: `
-                            query ($season: MediaSeason, $seasonYear: Int, $type: MediaType) {
-                                Page(page: 1, perPage: 24) {
-                                    media(
-                                        season: $season
-                                        seasonYear: $seasonYear
-                                        type: $type
-                                    ) {
-                                        id
-                                        title {
-                                            romaji
-                                            english
-                                        }
-                                        coverImage {
-                                            large
-                                            color
-                                        }
-                                        averageScore
-                                        episodes
-                                        seasonYear
-                                    }
+        // Display season info for debugging
+        document.getElementById('season-info').textContent = `Showing ${season} ${year}`;
+
+        // Get filters
+        const format = document.getElementById('format').value;
+        const status = document.getElementById('status').value;
+        const selectedGenres = Array.from(document.querySelectorAll('.genre-tag.active'))
+            .map(tag => tag.dataset.genre);
+
+        // Prepare query variables
+        const variables = {
+            season: season,
+            seasonYear: year,
+            type: 'ANIME',
+            sort: 'POPULARITY_DESC',
+            page: 1,
+            perPage: 24
+        };
+
+        // Add optional filters
+        if (format !== 'ALL') variables.format = format;
+        if (status !== 'ALL') variables.status = status;
+        if (selectedGenres.length > 0) variables.genre_in = selectedGenres;
+
+        console.log('Seasonal query variables:', variables);
+
+        const response = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                query: `
+                    query (
+                        $season: MediaSeason,
+                        $seasonYear: Int,
+                        $type: MediaType,
+                        $format: MediaFormat,
+                        $status: MediaStatus,
+                        $genre_in: [String],
+                        $page: Int,
+                        $perPage: Int,
+                        $sort: [MediaSort]
+                    ) {
+                        Page(page: $page, perPage: $perPage) {
+                            media(
+                                season: $season
+                                seasonYear: $seasonYear
+                                type: $type
+                                format: $format
+                                status: $status
+                                genre_in: $genre_in
+                                sort: $sort
+                            ) {
+                                id
+                                title {
+                                    romaji
+                                    english
                                 }
+                                coverImage {
+                                    large
+                                    color
+                                }
+                                averageScore
+                                episodes
+                                seasonYear
+                                format
+                                status
                             }
-                        `,
-                        variables: {
-                            season: season,
-                            seasonYear: year,
-                            type: 'ANIME'
                         }
-                    })
-                });
-                const data = await response.json();
-                if (data.data && data.data.Page) {
-                    renderCards(data.data.Page.media, 'seasonal-grid');
-                }
-            } catch (error) {
-                document.getElementById('seasonal-grid').innerHTML = `
-                    <div class="error">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Error loading seasonal content</p>
-                    </div>
-                `;
-                console.error('Error loading seasonal content:', error);
-            }
+                    }
+                `,
+                variables: variables
+            })
+        });
+        
+        const data = await response.json();
+        console.log('Seasonal API response:', data);
+
+        if (data.data && data.data.Page && data.data.Page.media && data.data.Page.media.length > 0) {
+            renderCards(data.data.Page.media, 'seasonal-grid');
+        } else {
+            document.getElementById('seasonal-grid').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-alt"></i>
+                    <p>No seasonal content found for ${season} ${year}</p>
+                    <p>Try adjusting your filters or check back later!</p>
+                </div>
+            `;
         }
+    } catch (error) {
+        console.error('Error loading seasonal content:', error);
+        document.getElementById('seasonal-grid').innerHTML = `
+            <div class="error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Error loading seasonal content</p>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
 
         // Load recent content
         function loadRecentContent() {
@@ -2374,17 +2448,11 @@
                         <input type="text" id="list-search" placeholder="Search...">
                     </div>
                     <div class="list-filter-group">
-                        <select id="list-type-filter">
-                            <option value="all">All Types</option>
-                            <option value="anime">Anime</option>
-                            <option value="manga">Manga</option>
-                        </select>
-                    </div>
-                    <div class="list-filter-group">
                         <select id="list-status-filter">
                             <option value="all">All Statuses</option>
                             <option value="planning">Planning</option>
                             <option value="watching">Watching</option>
+                            <option value="reading">Reading</option>
                             <option value="completed">Completed</option>
                             <option value="paused">Paused</option>
                             <option value="dropped">Dropped</option>
@@ -2402,9 +2470,6 @@
             document.getElementById('list-search').addEventListener('input', () => {
                 loadListContent();
             });
-            document.getElementById('list-type-filter').addEventListener('change', () => {
-                loadListContent();
-            });
             document.getElementById('list-status-filter').addEventListener('change', () => {
                 loadListContent();
             });
@@ -2413,6 +2478,7 @@
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
+                    currentPage = 1; // Reset to first page when switching tabs
                     loadListContent();
                 });
             });
@@ -2424,7 +2490,6 @@
         function loadListContent() {
             const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'anime';
             const searchTerm = document.getElementById('list-search')?.value.toLowerCase() || '';
-            const typeFilter = document.getElementById('list-type-filter')?.value || 'all';
             const statusFilter = document.getElementById('list-status-filter')?.value || 'all';
             
             // Use correct list based on tab
@@ -2433,9 +2498,8 @@
             // Apply filters
             let filteredItems = listItems.filter(item => {
                 const matchesSearch = item.title.toLowerCase().includes(searchTerm);
-                const matchesType = typeFilter === 'all' || item.type === typeFilter;
                 const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-                return matchesSearch && matchesType && matchesStatus;
+                return matchesSearch && matchesStatus;
             });
             
             // Pagination logic
@@ -2495,7 +2559,9 @@
                                     <div class="action-group">
                                         <select class="status-select" onchange="updateStatus(${item.id}, '${activeTab}', this.value)">
                                             <option value="planning" ${item.status === 'planning' ? 'selected' : ''}>Planning</option>
-                                            <option value="watching" ${item.status === 'watching' ? 'selected' : ''}>Watching</option>
+                                            <option value="${activeTab === 'anime' ? 'watching' : 'reading'}" ${item.status === (activeTab === 'anime' ? 'watching' : 'reading') ? 'selected' : ''}>
+                                                ${activeTab === 'anime' ? 'Watching' : 'Reading'}
+                                            </option>
                                             <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>Completed</option>
                                             <option value="paused" ${item.status === 'paused' ? 'selected' : ''}>Paused</option>
                                             <option value="dropped" ${item.status === 'dropped' ? 'selected' : ''}>Dropped</option>
@@ -2585,7 +2651,7 @@
         // Update progress
         function updateProgress(id, type, element) {
             const value = parseInt(element.value);
-            if (isNaN(value) || value < 0) return;
+            if (isNaN(value)) return;
             const list = type === 'anime' ? animeList : mangaList;
             const item = list.find(i => i.id === id);
             if (item) {
@@ -2604,7 +2670,7 @@
         // Update score
         function updateScore(id, type, element) {
             const value = parseFloat(element.value);
-            if (isNaN(value) || value < 0 || value > 10) return;
+            if (isNaN(value)) return;
             const list = type === 'anime' ? animeList : mangaList;
             const item = list.find(i => i.id === id);
             if (item) {
@@ -2809,7 +2875,6 @@
             }
         }
 
-        // Display media details in modal
         function displayMediaDetails(media) {
             const title = media.title.english || media.title.romaji || 'Untitled';
             const nativeTitle = media.title.native || '';
@@ -2825,16 +2890,23 @@
             // Check if media is in user's lists
             const isInAnimeList = animeList.some(item => item.id === media.id);
             const isInMangaList = mangaList.some(item => item.id === media.id);
+            const isFavorite = favoritesList.some(item => item.id === media.id);
             
             // Determine which list buttons to show
-            const showAnimeButton = media.format !== 'MANGA';
-            const showMangaButton = media.format !== 'ANIME';
+            const animeFormats = ['TV', 'TV_SHORT', 'MOVIE', 'SPECIAL', 'OVA', 'ONA'];
+            const mangaFormats = ['MANGA', 'NOVEL', 'ONE_SHOT'];
+            
+            const showAnimeButton = animeFormats.includes(media.format);
+            const showMangaButton = mangaFormats.includes(media.format);
             
             const animeListButtonText = isInAnimeList ? 'Remove from Anime List' : 'Add to Anime List';
             const animeListButtonClass = isInAnimeList ? 'secondary' : '';
             
             const mangaListButtonText = isInMangaList ? 'Remove from Manga List' : 'Add to Manga List';
             const mangaListButtonClass = isInMangaList ? 'secondary' : '';
+            
+            const favoriteButtonText = isFavorite ? 'Remove from Favorites' : 'Add to Favorites';
+            const favoriteButtonClass = isFavorite ? 'favorite active' : 'favorite';
             
             modalBody.innerHTML = `
                 <div class="modal-header">
@@ -2912,6 +2984,9 @@
                     </div>
                 </div>
                 <div class="favorite-actions">
+                    <button class="action-btn ${favoriteButtonClass}" id="add-to-favorites">
+                        <i class="fas fa-heart"></i> ${favoriteButtonText}
+                    </button>
                     ${showAnimeButton ? `
                         <button class="action-btn ${animeListButtonClass}" id="add-to-anime-list">
                             <i class="fas fa-tv"></i> ${animeListButtonText}
@@ -2928,6 +3003,7 @@
             // Add event listeners to action buttons
             const animeListBtn = document.getElementById('add-to-anime-list');
             const mangaListBtn = document.getElementById('add-to-manga-list');
+            const favoriteBtn = document.getElementById('add-to-favorites');
             
             if (animeListBtn) {
                 animeListBtn.addEventListener('click', () => {
@@ -2938,6 +3014,12 @@
             if (mangaListBtn) {
                 mangaListBtn.addEventListener('click', () => {
                     toggleMangaList(media);
+                });
+            }
+            
+            if (favoriteBtn) {
+                favoriteBtn.addEventListener('click', () => {
+                    toggleFavorite(media);
                 });
             }
         }
@@ -2978,6 +3060,9 @@
                     animeListBtn.className = 'action-btn';
                 }
             }
+            
+            // Update profile stats
+            loadProfileStats();
         }
 
         // Toggle manga list
@@ -3016,6 +3101,46 @@
                     mangaListBtn.className = 'action-btn';
                 }
             }
+            
+            // Update profile stats
+            loadProfileStats();
+        }
+
+        // Toggle favorite
+        function toggleFavorite(media) {
+            const existingIndex = favoritesList.findIndex(item => item.id === media.id);
+            if (existingIndex > -1) {
+                // Remove from favorites
+                favoritesList.splice(existingIndex, 1);
+                showNotification('Removed from favorites');
+            } else {
+                // Add to favorites
+                const favoriteItem = {
+                    id: media.id,
+                    title: media.title.english || media.title.romaji || 'Untitled',
+                    image: media.coverImage.large,
+                    type: media.format === 'MANGA' ? 'manga' : 'anime'
+                };
+                favoritesList.push(favoriteItem);
+                showNotification('Added to favorites!');
+            }
+            
+            // Update button in modal immediately
+            if (modal.style.display === 'block') {
+                const favoriteBtn = document.getElementById('add-to-favorites');
+                const isCurrentlyFavorite = favoritesList.some(item => item.id === media.id);
+                if (isCurrentlyFavorite) {
+                    favoriteBtn.textContent = 'Remove from Favorites';
+                    favoriteBtn.className = 'action-btn favorite active';
+                } else {
+                    favoriteBtn.textContent = 'Add to Favorites';
+                    favoriteBtn.className = 'action-btn favorite';
+                }
+            }
+            
+            // Update favorites display
+            loadFavoritesDisplay();
+            loadProfileStats();
         }
 
         // Show notification
@@ -3046,6 +3171,8 @@
                     if (tabLink) {
                         tabLink.classList.add('active');
                         currentTab = tab;
+                        currentPage = 1;
+                        updateSidebarFilters();
                         loadContent();
                     }
                 }
@@ -3056,8 +3183,9 @@
         function loadProfileStats() {
             const animeCount = animeList.length;
             const mangaCount = mangaList.length;
-            const favoritesCount = 0; // No favorites in this version
-            const watchlistCount = 0; // No watchlist
+            const favoritesCount = favoritesList.length;
+            const watchlistCount = animeList.filter(item => item.status === 'planning').length + 
+                                 mangaList.filter(item => item.status === 'planning').length;
             document.getElementById('profile-anime-count').textContent = animeCount;
             document.getElementById('profile-manga-count').textContent = mangaCount;
             document.getElementById('profile-favorites-count').textContent = favoritesCount;

@@ -1431,7 +1431,7 @@
                                         }
                                     }
                                 }
-                                animeList: MediaListCollection(userId: $userId, type: ANIME) {
+                                animeList: MediaListCollection(userId: 29049, type: ANIME) {
                                     lists {
                                         name
                                         entries {
@@ -1453,7 +1453,7 @@
                                         }
                                     }
                                 }
-                                mangaList: MediaListCollection(userId: $userId, type: MANGA) {
+                                mangaList: MediaListCollection(userId: 29049, type: MANGA) {
                                     lists {
                                         name
                                         entries {
@@ -1478,7 +1478,7 @@
                             }
                         `,
                         variables: {
-                            userId: null // Will be replaced with actual user ID
+                            userId: 29049 // Hardcoded user ID for testing
                         }
                     })
                 });

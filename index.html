@@ -1,0 +1,2829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime & Manga Hub - Optimized</title>
+    <link rel="preconnect" href="https://graphql.anilist.co">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            background-attachment: fixed;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .user-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .theme-toggle, .history-toggle, .filter-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .theme-toggle:hover, .history-toggle:hover, .filter-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-button {
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+        }
+        
+        .tab-button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .search-container {
+            display: flex;
+            max-width: 700px;
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            border-radius: 50px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #search-input {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 1.1rem;
+            outline: none;
+        }
+        
+        #search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        #search-button {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border: none;
+            padding: 0 30px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        #search-button:hover {
+            background: linear-gradient(45deg, #ff5252, #3db8b0);
+            transform: scale(1.05);
+        }
+        
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 150px;
+        }
+        
+        .filter-group label {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #aaa;
+            font-weight: 500;
+        }
+        
+        .filter-group select, .filter-group input {
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .filter-group select:focus, .filter-group input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.3);
+        }
+        
+        .genre-checkboxes {
+            display: none;
+            position: absolute;
+            background: rgba(26, 26, 46, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+            width: 250px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+        }
+        
+        .genre-checkboxes.show {
+            display: block;
+        }
+        
+        .genre-checkbox-item {
+            margin-bottom: 10px;
+        }
+        
+        .genre-checkbox-item label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        
+        .genre-checkbox-item input {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .selected-genres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .selected-genre {
+            background: rgba(78, 205, 196, 0.2);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .remove-genre {
+            background: none;
+            border: none;
+            color: #4ecdc4;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+        }
+        
+        .media-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            transform: translateZ(0);
+        }
+        
+        .media-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .favorite-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .favorite-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255, 0, 0, 0.3);
+        }
+        
+        .cover-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s;
+        }
+        
+        .media-card:hover .cover-image {
+            transform: scale(1.05);
+        }
+        
+        .media-info {
+            padding: 20px;
+        }
+        
+        .title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #fff;
+        }
+        
+        .details {
+            display: flex;
+            justify-content: space-between;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 12px;
+        }
+        
+        .score {
+            color: #ffd700;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .loading, .error, .no-results {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.3rem;
+            grid-column: 1 / -1;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .loading {
+            color: #4ecdc4;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+        
+        .no-results {
+            color: #aaa;
+        }
+        
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .skeleton-image {
+            width: 100%;
+            height: 300px;
+            margin-bottom: 15px;
+        }
+        
+        .skeleton-line {
+            height: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .skeleton-line.short {
+            width: 60%;
+        }
+        
+        .skeleton-line.very-short {
+            width: 40%;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        
+        .page-button {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .page-button:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .page-button.active {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .page-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            overflow: auto;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: rgba(26, 26, 46, 0.95);
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 25px;
+            width: 95%;
+            max-width: 1000px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .close {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            font-size: 2.5rem;
+            cursor: pointer;
+            color: #aaa;
+            transition: all 0.3s;
+            z-index: 10;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .close:hover {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.2);
+            transform: rotate(90deg);
+        }
+        
+        .modal-header {
+            position: relative;
+            height: 400px;
+            overflow: hidden;
+        }
+        
+        .modal-banner {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.6);
+        }
+        
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(26, 26, 46, 1), transparent 60%);
+        }
+        
+        .modal-content-inner {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 40px;
+            display: flex;
+            gap: 30px;
+        }
+        
+        .modal-image {
+            flex: 0 0 250px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-image img {
+            width: 100%;
+            display: block;
+        }
+        
+        .modal-info {
+            flex: 1;
+            color: white;
+        }
+        
+        .modal-title {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .modal-native-title {
+            font-size: 1.3rem;
+            color: #aaa;
+            margin-bottom: 20px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .modal-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .modal-detail {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-description {
+            line-height: 1.7;
+            color: #ddd;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+        
+        .modal-description::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .modal-description::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+        .modal-description::-webkit-scrollbar-thumb {
+            background: rgba(78, 205, 196, 0.5);
+            border-radius: 4px;
+        }
+        
+        .modal-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #4ecdc4;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .modal-section {
+            padding: 30px 40px;
+        }
+        
+        .modal-section h3 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #4ecdc4;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .genres-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .genre-tag {
+            background: rgba(78, 205, 196, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+        }
+        
+        /* History Dropdown */
+        .history-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: none;
+        }
+        
+        .history-item {
+            padding: 15px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .history-term {
+            font-weight: 500;
+        }
+        
+        .history-tab {
+            font-size: 0.8rem;
+            background: rgba(78, 205, 196, 0.2);
+            padding: 4px 10px;
+            border-radius: 10px;
+            color: #4ecdc4;
+        }
+        
+        /* Favorites Section */
+        .favorites-layout {
+            display: flex;
+            gap: 30px;
+            min-height: 500px;
+        }
+        
+        .favorites-sidebar {
+            flex: 0 0 250px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .favorites-sidebar h3 {
+            margin-bottom: 25px;
+            color: #4ecdc4;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+        
+        .sidebar-section h4 {
+            margin-bottom: 15px;
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar-filter {
+            margin-bottom: 12px;
+        }
+        
+        .sidebar-filter label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-filter label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-filter input {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .favorites-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .favorites-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .favorites-header h2 {
+            font-size: 2rem;
+            color: #4ecdc4;
+        }
+        
+        .favorites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 25px;
+        }
+        
+        .favorite-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        
+        .favorite-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .remove-favorite {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 0, 0, 0.7);
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .remove-favorite:hover {
+            background: rgba(255, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+        
+        .favorite-image {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+        }
+        
+        .favorite-info {
+            padding: 20px;
+        }
+        
+        .favorite-title {
+            font-weight: bold;
+            margin-bottom: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 1.1rem;
+        }
+        
+        .favorite-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .favorite-status {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-watching, .status-reading { background: rgba(78, 205, 196, 0.3); color: #4ecdc4; }
+        .status-completed { background: rgba(46, 204, 113, 0.3); color: #2ecc71; }
+        .status-planning { background: rgba(241, 196, 15, 0.3); color: #f1c40f; }
+        .status-paused { background: rgba(149, 165, 166, 0.3); color: #95a5a6; }
+        .status-dropped { background: rgba(231, 76, 60, 0.3); color: #e74c3c; }
+        
+        .progress-container {
+            margin-top: 15px;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+        
+        /* Add to Favorites Modal */
+        .add-favorite-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .add-favorite-content {
+            background: rgba(26, 26, 46, 0.95);
+            padding: 40px;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .add-favorite-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .add-favorite-header h2 {
+            font-size: 1.8rem;
+            color: #4ecdc4;
+        }
+        
+        .add-favorite-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .add-favorite-close:hover {
+            color: #ff6b6b;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #ddd;
+        }
+        
+        .form-group select, .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.3);
+        }
+        
+        .add-favorite-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .add-favorite-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .add-favorite-confirm {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+        }
+        
+        .add-favorite-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .add-favorite-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .add-favorite-confirm:hover {
+            background: linear-gradient(45deg, #ff5252, #3db8b0);
+        }
+        
+        .add-favorite-cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Confirmation Dialog */
+        .confirmation-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .confirmation-content {
+            background: rgba(26, 26, 46, 0.95);
+            padding: 40px;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        
+        .confirmation-message {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #ddd;
+        }
+        
+        .confirmation-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .confirmation-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .confirmation-confirm {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+        }
+        
+        .confirmation-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .confirmation-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        /* Light Theme */
+        body.light-theme {
+            background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+            color: #333;
+        }
+        
+        body.light-theme .media-card,
+        body.light-theme .filter-group select,
+        body.light-theme .filter-group input,
+        body.light-theme .page-button,
+        body.light-theme .theme-toggle,
+        body.light-theme .history-toggle,
+        body.light-theme .filter-toggle,
+        body.light-theme .sidebar-filter label,
+        body.light-theme .favorites-sidebar,
+        body.light-theme .favorites-content,
+        body.light-theme .add-favorite-content,
+        body.light-theme .confirmation-content {
+            background: rgba(255, 255, 255, 0.85);
+            color: #333;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-theme .modal-content,
+        body.light-theme .history-dropdown,
+        body.light-theme .genre-checkboxes {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+        }
+        
+        body.light-theme .modal-detail,
+        body.light-theme .stat-card,
+        body.light-theme .episodes-info {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        body.light-theme .history-item {
+            background: rgba(0, 0, 0, 0.02);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        body.light-theme .history-item:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+        
+        body.light-theme .tab-button:not(.active) {
+            background: rgba(255, 255, 255, 0.7);
+            color: #333;
+        }
+        
+        body.light-theme .tab-button.active {
+            color: white;
+        }
+        
+        body.light-theme .search-container {
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        body.light-theme #search-input {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        
+        body.light-theme .filters {
+            background: rgba(255, 255, 255, 0.7);
+        }
+        
+        body.light-theme .title,
+        body.light-theme .favorite-title {
+            color: #333;
+        }
+        
+        body.light-theme .details,
+        body.light-theme .favorite-meta {
+            color: #666;
+        }
+        
+        body.light-theme .modal-title,
+        body.light-theme .modal-section h3 {
+            color: #2a9d8f;
+        }
+        
+        body.light-theme .modal-description {
+            color: #555;
+        }
+        
+        body.light-theme .genre-tag {
+            background: rgba(42, 157, 143, 0.2);
+            border: 1px solid rgba(42, 157, 143, 0.3);
+        }
+        
+        body.light-theme .selected-genre {
+            background: rgba(42, 157, 143, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .results-container {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 15px;
+            }
+            
+            .modal-header {
+                height: 300px;
+            }
+            
+            .modal-content-inner {
+                flex-direction: column;
+                padding: 20px;
+            }
+            
+            .modal-image {
+                flex: none;
+                width: 100%;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .filter-group {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .user-controls {
+                position: static;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+            
+            .favorites-layout {
+                flex-direction: column;
+            }
+            
+            .favorites-sidebar {
+                flex: none;
+            }
+            
+            .favorites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            
+            .modal-title {
+                font-size: 1.8rem;
+            }
+            
+            .modal-native-title {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-otaku"></i> Anime & Manga Hub</h1>
+            
+            <div class="user-controls">
+                <button class="theme-toggle" id="theme-toggle" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="filter-toggle" id="filter-toggle" title="Toggle Filters">
+                    <i class="fas fa-sliders-h"></i>
+                </button>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab-button active" data-tab="anime">
+                    <i class="fas fa-tv"></i> Anime
+                </button>
+                <button class="tab-button" data-tab="manga">
+                    <i class="fas fa-book"></i> Manga
+                </button>
+                <button class="tab-button" data-tab="seasonal">
+                    <i class="fas fa-calendar-alt"></i> Seasonal
+                </button>
+                <button class="tab-button" data-tab="favorites">
+                    <i class="fas fa-heart"></i> Favorites
+                </button>
+            </div>
+            
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="Search for anime or manga..."
+                    autocomplete="off"
+                >
+                <button id="search-button">Search</button>
+                <div class="history-dropdown" id="history-dropdown"></div>
+            </div>
+            
+            <div class="filters" id="filters-section">
+                <div class="filter-group">
+                    <label for="sort-select">Sort By</label>
+                    <select id="sort-select">
+                        <option value="POPULARITY_DESC">Popularity</option>
+                        <option value="SCORE_DESC">Score</option>
+                        <option value="TRENDING_DESC">Trending</option>
+                        <option value="FAVOURITES_DESC">Favorites</option>
+                        <option value="UPDATED_AT_DESC">Recently Updated</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group" style="position: relative;">
+                    <label for="genre-select">Genre</label>
+                    <div id="genre-select" class="genre-selector" style="padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.2); cursor: pointer;">
+                        Select genres...
+                    </div>
+                    <div class="genre-checkboxes" id="genre-checkboxes">
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Action"> Action</label>
+                        </div>
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Adventure"> Adventure</label>
+                        </div>
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Comedy"> Comedy</label>
+                        </div>
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Drama"> Drama</label>
+                        </div>
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Fantasy"> Fantasy</label>
+                        </div>
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Romance"> Romance</label>
+                        </div>
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Sci-Fi"> Sci-Fi</label>
+                        </div>
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Slice of Life"> Slice of Life</label>
+                        </div>
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Sports"> Sports</label>
+                        </div>
+                        <div class="genre-checkbox-item">
+                            <label><input type="checkbox" value="Supernatural"> Supernatural</label>
+                        </div>
+                    </div>
+                    <div class="selected-genres" id="selected-genres"></div>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="year-input">Year</label>
+                    <input type="number" id="year-input" placeholder="Any year" min="1950" max="2030">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="status-select">Status</label>
+                    <select id="status-select">
+                        <option value="">All Status</option>
+                        <option value="FINISHED">Finished</option>
+                        <option value="RELEASING">Releasing</option>
+                        <option value="NOT_YET_RELEASED">Not Yet Released</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+        
+        <main>
+            <div id="results" class="results-container">
+                <!-- Results will be populated here -->
+            </div>
+            
+            <div id="pagination" class="pagination">
+                <!-- Pagination buttons will be populated here -->
+            </div>
+            
+            <div id="favorites-content" class="favorites-layout" style="display: none;">
+                <div class="favorites-sidebar">
+                    <h3><i class="fas fa-filter"></i> Filters</h3>
+                    
+                    <div class="sidebar-section">
+                        <h4>Media Type</h4>
+                        <div class="sidebar-filter">
+                            <label>
+                                <input type="checkbox" id="filter-anime" checked>
+                                Anime
+                            </label>
+                        </div>
+                        <div class="sidebar-filter">
+                            <label>
+                                <input type="checkbox" id="filter-manga" checked>
+                                Manga
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="sidebar-section">
+                        <h4>Status</h4>
+                        <div class="sidebar-filter">
+                            <label>
+                                <input type="checkbox" class="status-filter" data-status="all" checked>
+                                All Status
+                            </label>
+                        </div>
+                        <div class="sidebar-filter">
+                            <label>
+                                <input type="checkbox" class="status-filter" data-status="watching">
+                                Watching
+                            </label>
+                        </div>
+                        <div class="sidebar-filter">
+                            <label>
+                                <input type="checkbox" class="status-filter" data-status="reading">
+                                Reading
+                            </label>
+                        </div>
+                        <div class="sidebar-filter">
+                            <label>
+                                <input type="checkbox" class="status-filter" data-status="completed">
+                                Completed
+                            </label>
+                        </div>
+                        <div class="sidebar-filter">
+                            <label>
+                                <input type="checkbox" class="status-filter" data-status="planning">
+                                Planning
+                            </label>
+                        </div>
+                        <div class="sidebar-filter">
+                            <label>
+                                <input type="checkbox" class="status-filter" data-status="paused">
+                                Paused
+                            </label>
+                        </div>
+                        <div class="sidebar-filter">
+                            <label>
+                                <input type="checkbox" class="status-filter" data-status="dropped">
+                                Dropped
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="favorites-content">
+                    <div class="favorites-header">
+                        <h2><i class="fas fa-heart"></i> My Favorites</h2>
+                    </div>
+                    <div id="favorites-grid" class="favorites-grid">
+                        <!-- Favorites will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Add to Favorites Modal -->
+    <div class="add-favorite-modal" id="add-favorite-modal">
+        <div class="add-favorite-content">
+            <div class="add-favorite-header">
+                <h2 id="favorite-modal-title">Add to Favorites</h2>
+                <button class="add-favorite-close">&times;</button>
+            </div>
+            <form id="add-favorite-form">
+                <input type="hidden" id="favorite-id">
+                <input type="hidden" id="favorite-title">
+                <input type="hidden" id="favorite-image">
+                <input type="hidden" id="favorite-type">
+                <input type="hidden" id="favorite-max-progress">
+                
+                <div class="form-group">
+                    <label for="favorite-status">Status</label>
+                    <select id="favorite-status" required>
+                        <option value="">Select Status</option>
+                        <option value="watching">Watching</option>
+                        <option value="reading">Reading</option>
+                        <option value="completed">Completed</option>
+                        <option value="planning">Plan to Watch/Read</option>
+                        <option value="paused">On Hold</option>
+                        <option value="dropped">Dropped</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="favorite-score">Score (0-10)</label>
+                    <input type="number" id="favorite-score" step="0.1" min="0" max="10" placeholder="e.g., 8.5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="favorite-progress">Progress</label>
+                    <input type="number" id="favorite-progress" min="0" placeholder="Current progress">
+                    <div id="progress-max" style="margin-top: 5px; font-size: 0.9rem; color: #aaa;"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="favorite-rewatch">Rewatch/Reread Count</label>
+                    <input type="number" id="favorite-rewatch" min="0" placeholder="Number of times rewatched">
+                </div>
+                
+                <div class="form-group">
+                    <label for="favorite-tags">Tags (comma separated)</label>
+                    <input type="text" id="favorite-tags" placeholder="e.g., favorite, action, emotional">
+                </div>
+                
+                <div class="form-group">
+                    <label for="favorite-notes">Notes</label>
+                    <textarea id="favorite-notes" placeholder="Any additional notes..."></textarea>
+                </div>
+                
+                <div class="add-favorite-actions">
+                    <button type="button" class="add-favorite-btn add-favorite-cancel">Cancel</button>
+                    <button type="submit" class="add-favorite-btn add-favorite-confirm" id="favorite-submit-btn">Add to Favorites</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Confirmation Dialog -->
+    <div class="confirmation-dialog" id="confirmation-dialog">
+        <div class="confirmation-content">
+            <div class="confirmation-message" id="confirmation-message">Are you sure you want to remove this item from favorites?</div>
+            <div class="confirmation-actions">
+                <button class="confirmation-btn confirmation-cancel" id="confirmation-cancel">Cancel</button>
+                <button class="confirmation-btn confirmation-confirm" id="confirmation-confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for detailed view -->
+    <div id="detail-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body">
+                <!-- Modal content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const resultsContainer = document.getElementById('results');
+        const paginationContainer = document.getElementById('pagination');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const modal = document.getElementById('detail-modal');
+        const modalBody = document.getElementById('modal-body');
+        const closeModal = document.querySelector('.close');
+        const themeToggle = document.getElementById('theme-toggle');
+        const filterToggle = document.getElementById('filter-toggle');
+        const filtersSection = document.getElementById('filters-section');
+        const historyDropdown = document.getElementById('history-dropdown');
+        const favoritesLayout = document.getElementById('favorites-content');
+        const favoritesGrid = document.getElementById('favorites-grid');
+        const addFavoriteModal = document.getElementById('add-favorite-modal');
+        const addFavoriteForm = document.getElementById('add-favorite-form');
+        const addFavoriteClose = document.querySelector('.add-favorite-close');
+        const addFavoriteCancel = document.querySelector('.add-favorite-cancel');
+        const confirmationDialog = document.getElementById('confirmation-dialog');
+        const confirmationCancel = document.getElementById('confirmation-cancel');
+        const confirmationConfirm = document.getElementById('confirmation-confirm');
+        const confirmationMessage = document.getElementById('confirmation-message');
+        const genreSelector = document.getElementById('genre-select');
+        const genreCheckboxes = document.getElementById('genre-checkboxes');
+        const selectedGenresContainer = document.getElementById('selected-genres');
+        
+        // Filter elements
+        const filterAnime = document.getElementById('filter-anime');
+        const filterManga = document.getElementById('filter-manga');
+        const statusFilters = document.querySelectorAll('.status-filter');
+        
+        // State
+        let currentTab = 'anime';
+        let currentMedia = null;
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentSearchTerm = '';
+        let searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+        let activeStatusFilters = ['all'];
+        let selectedGenres = [];
+        let itemToRemove = null;
+        
+        // Cache implementation
+        const cache = {
+            data: new Map(),
+            get(key) {
+                const item = this.data.get(key);
+                if (!item) return null;
+                // Check if cache is expired (5 minutes)
+                if (Date.now() - item.timestamp > 300000) {
+                    this.data.delete(key);
+                    return null;
+                }
+                return item.data;
+            },
+            set(key, data) {
+                this.data.set(key, {
+                    data,
+                    timestamp: Date.now()
+                });
+            }
+        };
+        
+        // GraphQL queries
+        const basicMediaQuery = `
+            query ($search: String, $type: MediaType, $sort: [MediaSort], $genre: [String], $year: Int, $status: MediaStatus, $page: Int) {
+                Page(page: $page, perPage: 24) {
+                    pageInfo {
+                        total
+                        currentPage
+                        lastPage
+                        hasNextPage
+                    }
+                    media(
+                        search: $search, 
+                        type: $type, 
+                        sort: $sort,
+                        genre_in: $genre,
+                        seasonYear: $year,
+                        status: $status
+                    ) {
+                        id
+                        title {
+                            romaji
+                            english
+                        }
+                        coverImage {
+                            large
+                            color
+                        }
+                        averageScore
+                        episodes
+                        chapters
+                        seasonYear
+                        status
+                    }
+                }
+            }
+        `;
+        
+        const detailQuery = `
+            query ($id: Int, $type: MediaType) {
+                Media(id: $id, type: $type) {
+                    id
+                    title {
+                        romaji
+                        english
+                        native
+                    }
+                    coverImage {
+                        large
+                        extraLarge
+                        color
+                    }
+                    bannerImage
+                    description(asHtml: false)
+                    genres
+                    averageScore
+                    meanScore
+                    popularity
+                    favourites
+                    status
+                    format
+                    startDate {
+                        year
+                        month
+                        day
+                    }
+                    endDate {
+                        year
+                        month
+                        day
+                    }
+                    episodes
+                    chapters
+                    volumes
+                    season
+                    seasonYear
+                    studios {
+                        nodes {
+                            name
+                        }
+                    }
+                    characters(sort: [ROLE, FAVOURITES_DESC], perPage: 6) {
+                        nodes {
+                            name {
+                                full
+                            }
+                            image {
+                                medium
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+        
+        const seasonalQuery = `
+            query ($season: MediaSeason, $seasonYear: Int, $type: MediaType) {
+                Page(page: 1, perPage: 50) {
+                    media(
+                        season: $season,
+                        seasonYear: $seasonYear,
+                        type: $type,
+                        sort: [POPULARITY_DESC]
+                    ) {
+                        id
+                        title {
+                            romaji
+                            english
+                        }
+                        coverImage {
+                            large
+                            color
+                        }
+                        bannerImage
+                        averageScore
+                        episodes
+                        chapters
+                        season
+                        seasonYear
+                        format
+                        status
+                        description(asHtml: false)
+                    }
+                }
+            }
+        `;
+        
+        // Theme Toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            const icon = themeToggle.querySelector('i');
+            if (document.body.classList.contains('light-theme')) {
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'light');
+            } else {
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+        
+        // Filter Toggle
+        filterToggle.addEventListener('click', () => {
+            filtersSection.style.display = filtersSection.style.display === 'none' ? 'flex' : 'none';
+        });
+        
+        // Apply saved theme
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-theme');
+            themeToggle.querySelector('i').className = 'fas fa-sun';
+        }
+        
+        // Genre selection
+        genreSelector.addEventListener('click', (e) => {
+            e.stopPropagation();
+            genreCheckboxes.classList.toggle('show');
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (!genreSelector.contains(e.target) && !genreCheckboxes.contains(e.target)) {
+                genreCheckboxes.classList.remove('show');
+            }
+        });
+        
+        // Handle genre checkbox changes
+        document.querySelectorAll('.genre-checkbox-item input').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const genre = e.target.value;
+                if (e.target.checked) {
+                    if (!selectedGenres.includes(genre)) {
+                        selectedGenres.push(genre);
+                    }
+                } else {
+                    selectedGenres = selectedGenres.filter(g => g !== genre);
+                }
+                updateSelectedGenresDisplay();
+                
+                // Trigger search if not on favorites tab
+                if (currentTab !== 'favorites' && currentTab !== 'seasonal') {
+                    currentPage = 1;
+                    const searchTerm = searchInput.value.trim();
+                    currentSearchTerm = searchTerm;
+                    if (searchTerm || selectedGenres.length > 0 || yearInput.value || statusSelect.value) {
+                        searchMedia(searchTerm, currentPage);
+                    } else {
+                        loadTrendingContent(currentPage);
+                    }
+                }
+            });
+        });
+        
+        function updateSelectedGenresDisplay() {
+            selectedGenresContainer.innerHTML = '';
+            
+            if (selectedGenres.length === 0) {
+                genreSelector.textContent = 'Select genres...';
+                return;
+            }
+            
+            genreSelector.textContent = selectedGenres.length > 2 
+                ? `${selectedGenres.length} genres selected` 
+                : selectedGenres.join(', ');
+            
+            selectedGenres.forEach(genre => {
+                const tag = document.createElement('div');
+                tag.className = 'selected-genre';
+                tag.innerHTML = `
+                    ${genre}
+                    <button class="remove-genre" data-genre="${genre}">&times;</button>
+                `;
+                selectedGenresContainer.appendChild(tag);
+            });
+            
+            // Add event listeners to remove buttons
+            document.querySelectorAll('.remove-genre').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const genre = btn.dataset.genre;
+                    selectedGenres = selectedGenres.filter(g => g !== genre);
+                    updateSelectedGenresDisplay();
+                    
+                    // Uncheck the corresponding checkbox
+                    const checkbox = document.querySelector(`.genre-checkbox-item input[value="${genre}"]`);
+                    if (checkbox) checkbox.checked = false;
+                    
+                    // Trigger search if not on favorites tab
+                    if (currentTab !== 'favorites' && currentTab !== 'seasonal') {
+                        currentPage = 1;
+                        const searchTerm = searchInput.value.trim();
+                        currentSearchTerm = searchTerm;
+                        if (searchTerm || selectedGenres.length > 0 || yearInput.value || statusSelect.value) {
+                            searchMedia(searchTerm, currentPage);
+                        } else {
+                            loadTrendingContent(currentPage);
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Search History Dropdown
+        searchInput.addEventListener('focus', () => {
+            renderHistoryDropdown();
+            historyDropdown.style.display = 'block';
+        });
+        
+        searchInput.addEventListener('blur', () => {
+            // Delay hiding to allow clicking on items
+            setTimeout(() => {
+                historyDropdown.style.display = 'none';
+            }, 200);
+        });
+        
+        // Debounced search
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm.length > 2 || searchTerm.length === 0) {
+                    currentSearchTerm = searchTerm;
+                    currentPage = 1;
+                    if (currentTab === 'seasonal') {
+                        loadSeasonalContent();
+                    } else if (currentTab === 'favorites') {
+                        renderFavorites();
+                    } else {
+                        if (searchTerm || selectedGenres.length > 0 || yearInput.value || statusSelect.value) {
+                            searchMedia(searchTerm, currentPage);
+                        } else {
+                            loadTrendingContent(currentPage);
+                        }
+                    }
+                }
+            }, 500); // 500ms delay
+        });
+        
+        // Tab switching
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                currentTab = button.dataset.tab;
+                currentPage = 1;
+                const searchTerm = searchInput.value.trim();
+                currentSearchTerm = searchTerm;
+                
+                // Hide all content sections
+                resultsContainer.style.display = 'grid';
+                paginationContainer.style.display = 'flex';
+                favoritesLayout.style.display = 'none';
+                filtersSection.style.display = currentTab === 'favorites' || currentTab === 'seasonal' ? 'none' : 'flex';
+                
+                if (currentTab === 'favorites') {
+                    resultsContainer.style.display = 'none';
+                    paginationContainer.style.display = 'none';
+                    favoritesLayout.style.display = 'flex';
+                    renderFavorites();
+                } else if (currentTab === 'seasonal') {
+                    loadSeasonalContent();
+                } else {
+                    if (searchTerm || selectedGenres.length > 0 || yearInput.value || statusSelect.value) {
+                        searchMedia(searchTerm, currentPage);
+                    } else {
+                        loadTrendingContent(currentPage);
+                    }
+                }
+            });
+        });
+        
+        // Filter elements
+        const sortSelect = document.getElementById('sort-select');
+        const yearInput = document.getElementById('year-input');
+        const statusSelect = document.getElementById('status-select');
+        
+        // Apply filters when changed
+        [sortSelect, yearInput, statusSelect].forEach(element => {
+            element.addEventListener('change', () => {
+                if (currentTab !== 'seasonal' && currentTab !== 'favorites') {
+                    currentPage = 1;
+                    const searchTerm = searchInput.value.trim();
+                    currentSearchTerm = searchTerm;
+                    if (searchTerm || selectedGenres.length > 0 || yearInput.value || statusSelect.value) {
+                        searchMedia(searchTerm, currentPage);
+                    } else {
+                        loadTrendingContent(currentPage);
+                    }
+                }
+            });
+        });
+        
+        // Favorites filters
+        filterAnime.addEventListener('change', renderFavorites);
+        filterManga.addEventListener('change', renderFavorites);
+        
+        statusFilters.forEach(filter => {
+            filter.addEventListener('change', function() {
+                if (this.checked) {
+                    if (this.dataset.status === 'all') {
+                        // Uncheck all other filters
+                        statusFilters.forEach(f => {
+                            if (f.dataset.status !== 'all') f.checked = false;
+                        });
+                        activeStatusFilters = ['all'];
+                    } else {
+                        // Uncheck 'all' filter
+                        document.querySelector('.status-filter[data-status="all"]').checked = false;
+                        // Add to active filters
+                        activeStatusFilters = Array.from(statusFilters)
+                            .filter(f => f.checked && f.dataset.status !== 'all')
+                            .map(f => f.dataset.status);
+                        
+                        // If no filters selected, select 'all'
+                        if (activeStatusFilters.length === 0) {
+                            document.querySelector('.status-filter[data-status="all"]').checked = true;
+                            activeStatusFilters = ['all'];
+                        }
+                    }
+                } else {
+                    if (this.dataset.status !== 'all') {
+                        activeStatusFilters = activeStatusFilters.filter(s => s !== this.dataset.status);
+                        // If no filters selected, select 'all'
+                        if (activeStatusFilters.length === 0) {
+                            document.querySelector('.status-filter[data-status="all"]').checked = true;
+                            activeStatusFilters = ['all'];
+                        }
+                    }
+                }
+                renderFavorites();
+            });
+        });
+        
+        // Add to favorites form
+        addFavoriteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('favorite-id').value);
+            const title = document.getElementById('favorite-title').value;
+            const image = document.getElementById('favorite-image').value;
+            const type = document.getElementById('favorite-type').value;
+            const status = document.getElementById('favorite-status').value;
+            const score = parseFloat(document.getElementById('favorite-score').value) || 0;
+            const progress = parseInt(document.getElementById('favorite-progress').value) || 0;
+            const maxProgress = parseInt(document.getElementById('favorite-max-progress').value) || 0;
+            const rewatch = parseInt(document.getElementById('favorite-rewatch').value) || 0;
+            const tags = document.getElementById('favorite-tags').value.split(',').map(t => t.trim()).filter(t => t);
+            const notes = document.getElementById('favorite-notes').value;
+            
+            // Validate progress
+            if (progress > maxProgress && maxProgress > 0) {
+                alert(`Progress cannot exceed ${maxProgress}`);
+                return;
+            }
+            
+            // Add to favorites
+            const existingIndex = favorites.findIndex(fav => fav.id === id);
+            if (existingIndex > -1) {
+                favorites[existingIndex] = { 
+                    id, 
+                    title, 
+                    image, 
+                    type, 
+                    status, 
+                    score, 
+                    progress, 
+                    maxProgress,
+                    rewatch,
+                    tags,
+                    notes,
+                    updatedAt: new Date().toISOString()
+                };
+                document.getElementById('favorite-modal-title').textContent = 'Update Favorite';
+                document.getElementById('favorite-submit-btn').textContent = 'Update';
+            } else {
+                favorites.push({ 
+                    id, 
+                    title, 
+                    image, 
+                    type, 
+                    status, 
+                    score, 
+                    progress, 
+                    maxProgress,
+                    rewatch,
+                    tags,
+                    notes,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+                document.getElementById('favorite-modal-title').textContent = 'Add to Favorites';
+                document.getElementById('favorite-submit-btn').textContent = 'Add';
+            }
+            
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            addFavoriteModal.style.display = 'none';
+            if (currentTab === 'favorites') {
+                renderFavorites();
+            }
+        });
+        
+        addFavoriteClose.addEventListener('click', () => {
+            addFavoriteModal.style.display = 'none';
+        });
+        
+        addFavoriteCancel.addEventListener('click', () => {
+            addFavoriteModal.style.display = 'none';
+        });
+        
+        // Confirmation dialog
+        confirmationCancel.addEventListener('click', () => {
+            confirmationDialog.style.display = 'none';
+            itemToRemove = null;
+        });
+        
+        confirmationConfirm.addEventListener('click', () => {
+            if (itemToRemove) {
+                favorites = favorites.filter(fav => fav.id !== itemToRemove);
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+                renderFavorites();
+            }
+            confirmationDialog.style.display = 'none';
+            itemToRemove = null;
+        });
+        
+        // Progress validation
+        document.getElementById('favorite-progress').addEventListener('input', function() {
+            const maxProgress = parseInt(document.getElementById('favorite-max-progress').value) || 0;
+            const progress = parseInt(this.value) || 0;
+            
+            if (maxProgress > 0 && progress > maxProgress) {
+                this.value = maxProgress;
+            }
+        });
+        
+        // Function to show loading skeleton
+        function showLoadingSkeleton(count = 12) {
+            resultsContainer.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            
+            for (let i = 0; i < count; i++) {
+                const card = document.createElement('div');
+                card.className = 'media-card skeleton';
+                card.innerHTML = `
+                    <div class="skeleton-image"></div>
+                    <div class="media-info">
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line very-short"></div>
+                    </div>
+                `;
+                fragment.appendChild(card);
+            }
+            
+            resultsContainer.appendChild(fragment);
+        }
+        
+        // Function to load seasonal content
+        async function loadSeasonalContent() {
+            showLoadingSkeleton();
+            paginationContainer.innerHTML = '';
+            
+            const now = new Date();
+            const currentSeason = getCurrentSeason(now.getMonth());
+            const currentYear = now.getFullYear();
+            
+            const variables = {
+                season: currentSeason,
+                seasonYear: currentYear,
+                type: currentTab === 'anime' ? 'ANIME' : 'MANGA'
+            };
+            
+            try {
+                const response = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: seasonalQuery,
+                        variables: variables
+                    })
+                });
+                
+                const { data, errors } = await response.json();
+                
+                if (errors) {
+                    throw new Error(errors[0].message);
+                }
+                
+                if (!data.Page.media || data.Page.media.length === 0) {
+                    resultsContainer.innerHTML = '<div class="no-results">No seasonal content found for the current season.</div>';
+                    return;
+                }
+                
+                displayResults(data.Page.media);
+            } catch (error) {
+                resultsContainer.innerHTML = `<div class="error">Error loading seasonal content: ${error.message}</div>`;
+            }
+        }
+        
+        // Helper function to get current season
+        function getCurrentSeason(month) {
+            if (month >= 2 && month <= 4) return 'SPRING';
+            if (month >= 5 && month <= 7) return 'SUMMER';
+            if (month >= 8 && month <= 10) return 'FALL';
+            return 'WINTER';
+        }
+        
+        // Function to load trending/popular content
+        async function loadTrendingContent(page = 1) {
+            showLoadingSkeleton();
+            paginationContainer.innerHTML = '';
+            
+            const cacheKey = `trending_${currentTab}_${page}`;
+            const cached = cache.get(cacheKey);
+            if (cached) {
+                displayResults(cached.Page.media);
+                displayPagination(cached.Page.pageInfo);
+                return;
+            }
+            
+            const variables = {
+                type: currentTab.toUpperCase(),
+                sort: ['TRENDING_DESC', 'POPULARITY_DESC'],
+                page: page
+            };
+            
+            try {
+                const response = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: basicMediaQuery,
+                        variables: variables
+                    })
+                });
+                
+                const { data, errors } = await response.json();
+                
+                if (errors) {
+                    throw new Error(errors[0].message);
+                }
+                
+                // Cache the results
+                cache.set(cacheKey, data);
+                
+                displayResults(data.Page.media);
+                displayPagination(data.Page.pageInfo);
+            } catch (error) {
+                resultsContainer.innerHTML = `<div class="error">Error loading recommendations: ${error.message}</div>`;
+            }
+        }
+        
+        // Function to fetch media data
+        async function searchMedia(searchTerm, page = 1) {
+            showLoadingSkeleton();
+            paginationContainer.innerHTML = '';
+            
+            // Add to search history
+            if (searchTerm) {
+                addToHistory(searchTerm);
+            }
+            
+            const cacheKey = `search_${currentTab}_${searchTerm}_${selectedGenres.join(',')}_${yearInput.value}_${statusSelect.value}_${page}`;
+            const cached = cache.get(cacheKey);
+            if (cached) {
+                displayResults(cached.Page.media);
+                displayPagination(cached.Page.pageInfo);
+                return;
+            }
+            
+            const variables = {
+                search: searchTerm || undefined,
+                type: currentTab.toUpperCase(),
+                sort: [sortSelect.value],
+                genre: selectedGenres.length > 0 ? selectedGenres : undefined,
+                year: yearInput.value ? parseInt(yearInput.value) : undefined,
+                status: statusSelect.value || undefined,
+                page: page
+            };
+            
+            try {
+                const response = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: basicMediaQuery,
+                        variables: variables
+                    })
+                });
+                
+                const { data, errors } = await response.json();
+                
+                if (errors) {
+                    throw new Error(errors[0].message);
+                }
+                
+                // Cache the results
+                cache.set(cacheKey, data);
+                
+                displayResults(data.Page.media);
+                displayPagination(data.Page.pageInfo);
+            } catch (error) {
+                resultsContainer.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Function to fetch detailed media data
+        async function fetchMediaDetail(id) {
+            const cacheKey = `detail_${id}_${currentTab}`;
+            const cached = cache.get(cacheKey);
+            
+            if (cached) {
+                currentMedia = cached;
+                displayMediaDetail();
+                return;
+            }
+            
+            // Show loading state in modal
+            modalBody.innerHTML = `
+                <div class="loading">Loading details...</div>
+            `;
+            
+            try {
+                const response = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: detailQuery,
+                        variables: { id: id, type: currentTab === 'manga' ? 'MANGA' : 'ANIME' }
+                    })
+                });
+                
+                const { data, errors } = await response.json();
+                
+                if (errors) {
+                    throw new Error(errors[0].message);
+                }
+                
+                // Cache the results
+                cache.set(cacheKey, data.Media);
+                
+                currentMedia = data.Media;
+                displayMediaDetail();
+            } catch (error) {
+                modalBody.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Function to display search results
+        function displayResults(mediaList) {
+            if (!mediaList || mediaList.length === 0) {
+                resultsContainer.innerHTML = '<div class="no-results">No results found. Try different search terms.</div>';
+                return;
+            }
+            
+            // Create document fragment for better performance
+            const fragment = document.createDocumentFragment();
+            
+            mediaList.forEach(media => {
+                const card = document.createElement('div');
+                card.className = 'media-card';
+                card.dataset.id = media.id;
+                
+                // Build card HTML
+                const title = media.title.english || media.title.romaji;
+                const score = media.averageScore ? (media.averageScore / 10).toFixed(1) : 'N/A';
+                const year = media.seasonYear || 'Unknown';
+                const episodes = media.episodes || media.chapters || '?';
+                const isFavorite = favorites.some(fav => fav.id === media.id);
+                
+                card.innerHTML = `
+                    <button class="favorite-btn" data-id="${media.id}" data-title="${title}" data-image="${media.coverImage.large}" data-type="${currentTab}" data-episodes="${media.episodes || media.chapters || 0}">
+                        <i class="fas ${isFavorite ? 'fa-heart' : 'fa-heart-o'}"></i>
+                    </button>
+                    <img 
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='300' viewBox='0 0 220 300'%3E%3Crect width='220' height='300' fill='%23333'/%3E%3C/svg%3E" 
+                        data-src="${media.coverImage.large}" 
+                        alt="${title}" 
+                        class="cover-image lazy"
+                        style="background-color: ${media.coverImage.color || '#333'}"
+                    >
+                    <div class="media-info">
+                        <div class="title">${title}</div>
+                        <div class="details">
+                            <span>${year}</span>
+                            <span>${episodes} ${currentTab === 'anime' ? 'eps' : 'ch'}</span>
+                            <span class="score"><i class="fas fa-star"></i> ${score}</span>
+                        </div>
+                    </div>
+                `;
+                
+                fragment.appendChild(card);
+            });
+            
+            // Clear and append new content in one operation
+            resultsContainer.innerHTML = '';
+            resultsContainer.appendChild(fragment);
+            
+            // Initialize lazy loading
+            lazyLoad();
+            
+            // Add event listeners
+            addCardEventListeners();
+        }
+        
+        // Lazy load images
+        function lazyLoad() {
+            const lazyImages = document.querySelectorAll('.lazy');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        observer.unobserve(img);
+                    }
+                });
+            });
+
+            lazyImages.forEach(img => observer.observe(img));
+        }
+        
+        // Add card event listeners
+        function addCardEventListeners() {
+            // Add click event to cards
+            document.querySelectorAll('.media-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('favorite-btn')) {
+                        const id = card.dataset.id;
+                        fetchMediaDetail(id);
+                        modal.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Add favorite functionality
+            document.querySelectorAll('.favorite-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.dataset.id);
+                    const title = btn.dataset.title;
+                    const image = btn.dataset.image;
+                    const type = btn.dataset.type;
+                    const maxProgress = parseInt(btn.dataset.episodes) || 0;
+                    
+                    // Check if already in favorites
+                    const existing = favorites.find(fav => fav.id === id);
+                    if (existing) {
+                        // Show confirmation dialog
+                        itemToRemove = id;
+                        confirmationMessage.textContent = `Are you sure you want to remove "${title}" from favorites?`;
+                        confirmationDialog.style.display = 'flex';
+                    } else {
+                        // Show add to favorites modal
+                        document.getElementById('favorite-id').value = id;
+                        document.getElementById('favorite-title').value = title;
+                        document.getElementById('favorite-image').value = image;
+                        document.getElementById('favorite-type').value = type;
+                        document.getElementById('favorite-max-progress').value = maxProgress;
+                        document.getElementById('favorite-status').value = '';
+                        document.getElementById('favorite-score').value = '';
+                        document.getElementById('favorite-progress').value = '';
+                        document.getElementById('favorite-rewatch').value = '';
+                        document.getElementById('favorite-tags').value = '';
+                        document.getElementById('favorite-notes').value = '';
+                        document.getElementById('progress-max').textContent = maxProgress > 0 ? `Max: ${maxProgress}` : '';
+                        document.getElementById('favorite-modal-title').textContent = 'Add to Favorites';
+                        document.getElementById('favorite-submit-btn').textContent = 'Add';
+                        addFavoriteModal.style.display = 'flex';
+                    }
+                });
+            });
+        }
+        
+        // Function to render favorites
+        function renderFavorites() {
+            let filteredFavorites = [...favorites];
+            
+            // Filter by media type
+            if (!filterAnime.checked) {
+                filteredFavorites = filteredFavorites.filter(fav => fav.type !== 'anime');
+            }
+            if (!filterManga.checked) {
+                filteredFavorites = filteredFavorites.filter(fav => fav.type !== 'manga');
+            }
+            
+            // Filter by status
+            if (!activeStatusFilters.includes('all') && activeStatusFilters.length > 0) {
+                filteredFavorites = filteredFavorites.filter(fav => activeStatusFilters.includes(fav.status));
+            }
+            
+            if (filteredFavorites.length === 0) {
+                favoritesGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #aaa; padding: 40px; font-size: 1.2rem;">No favorites match your filters</div>';
+                return;
+            }
+            
+            // Create document fragment for better performance
+            const fragment = document.createDocumentFragment();
+            
+            filteredFavorites.forEach(fav => {
+                const progressPercent = fav.maxProgress > 0 ? 
+                    Math.min(100, (fav.progress / fav.maxProgress) * 100) : 0;
+                const statusClass = `status-${fav.status}`;
+                
+                const card = document.createElement('div');
+                card.className = 'favorite-card';
+                card.dataset.id = fav.id;
+                card.innerHTML = `
+                    <button class="remove-favorite" data-id="${fav.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <img 
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='280' viewBox='0 0 200 280'%3E%3Crect width='200' height='280' fill='%23333'/%3E%3C/svg%3E" 
+                        data-src="${fav.image}" 
+                        alt="${fav.title}" 
+                        class="favorite-image lazy"
+                    >
+                    <div class="favorite-info">
+                        <div class="favorite-title">${fav.title}</div>
+                        <div class="favorite-meta">
+                            <span class="${statusClass}">${getStatusText(fav.status, fav.type)}</span>
+                            <span>${fav.score > 0 ? fav.score.toFixed(1) : 'N/A'}/10</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>Progress</span>
+                                <span>${fav.progress || 0}${fav.maxProgress ? `/${fav.maxProgress}` : ''}</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                fragment.appendChild(card);
+            });
+            
+            // Clear and append new content in one operation
+            favoritesGrid.innerHTML = '';
+            favoritesGrid.appendChild(fragment);
+            
+            // Initialize lazy loading
+            lazyLoad();
+            
+            // Add remove functionality
+            document.querySelectorAll('.remove-favorite').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.dataset.id);
+                    const favorite = favorites.find(fav => fav.id === id);
+                    if (favorite) {
+                        itemToRemove = id;
+                        confirmationMessage.textContent = `Are you sure you want to remove "${favorite.title}" from favorites?`;
+                        confirmationDialog.style.display = 'flex';
+                    }
+                });
+            });
+            
+            // Add click to view details
+            document.querySelectorAll('.favorite-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('remove-favorite')) {
+                        const id = parseInt(card.dataset.id);
+                        const favorite = favorites.find(fav => fav.id === id);
+                        if (favorite) {
+                            currentTab = favorite.type;
+                            
+                            // Populate the edit modal with favorite data
+                            document.getElementById('favorite-id').value = favorite.id;
+                            document.getElementById('favorite-title').value = favorite.title;
+                            document.getElementById('favorite-image').value = favorite.image;
+                            document.getElementById('favorite-type').value = favorite.type;
+                            document.getElementById('favorite-max-progress').value = favorite.maxProgress || 0;
+                            document.getElementById('favorite-status').value = favorite.status || '';
+                            document.getElementById('favorite-score').value = favorite.score || '';
+                            document.getElementById('favorite-progress').value = favorite.progress || '';
+                            document.getElementById('favorite-rewatch').value = favorite.rewatch || '';
+                            document.getElementById('favorite-tags').value = favorite.tags ? favorite.tags.join(', ') : '';
+                            document.getElementById('favorite-notes').value = favorite.notes || '';
+                            document.getElementById('progress-max').textContent = favorite.maxProgress > 0 ? `Max: ${favorite.maxProgress}` : '';
+                            document.getElementById('favorite-modal-title').textContent = 'Edit Favorite';
+                            document.getElementById('favorite-submit-btn').textContent = 'Save Changes';
+                            
+                            // Show the modal
+                            addFavoriteModal.style.display = 'flex';
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Helper function to get status text
+        function getStatusText(status, type) {
+            const statusMap = {
+                'watching': 'Watching',
+                'reading': 'Reading',
+                'completed': 'Completed',
+                'planning': type === 'anime' ? 'Plan to Watch' : 'Plan to Read',
+                'paused': 'On Hold',
+                'dropped': 'Dropped'
+            };
+            return statusMap[status] || status;
+        }
+        
+        // Function to add to search history
+        function addToHistory(term) {
+            if (!term.trim()) return;
+            
+            // Remove if already exists
+            searchHistory = searchHistory.filter(item => item.term !== term);
+            
+            // Add to beginning
+            searchHistory.unshift({
+                term: term,
+                timestamp: new Date().toISOString(),
+                tab: currentTab
+            });
+            
+            // Keep only last 10 items
+            searchHistory = searchHistory.slice(0, 10);
+            
+            localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+        }
+        
+        // Function to render search history dropdown
+        function renderHistoryDropdown() {
+            if (searchHistory.length === 0) {
+                historyDropdown.innerHTML = '<div class="history-item" style="text-align: center; color: #aaa;">No search history</div>';
+                return;
+            }
+            
+            historyDropdown.innerHTML = searchHistory.map(item => {
+                const date = new Date(item.timestamp);
+                const formattedDate = date.toLocaleDateString();
+                
+                return `
+                    <div class="history-item" data-term="${item.term}">
+                        <span class="history-term">${item.term}</span>
+                        <span class="history-tab">${item.tab}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add click events
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const term = item.dataset.term || item.querySelector('.history-term').textContent;
+                    if (term !== 'No search history') {
+                        searchInput.value = term;
+                        searchMedia(term, 1);
+                        historyDropdown.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Function to display pagination
+        function displayPagination(pageInfo) {
+            const { currentPage, lastPage, hasNextPage } = pageInfo;
+            totalPages = lastPage;
+            
+            // Don't show pagination if there's only 1 page
+            if (lastPage <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            // Determine if there's a previous page
+            const hasPreviousPage = currentPage > 1;
+            
+            let paginationHTML = '';
+            
+            // Previous button
+            paginationHTML += `
+                <button class="page-button" ${!hasPreviousPage ? 'disabled' : ''} 
+                        onclick="changePage(${currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+            `;
+            
+            // Page numbers (show up to 5 pages around current)
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(lastPage, currentPage + 2);
+            
+            if (startPage > 1) {
+                paginationHTML += `<button class="page-button" onclick="changePage(1)">1</button>`;
+                if (startPage > 2) {
+                    paginationHTML += `<span style="padding: 12px; color: #aaa;">...</span>`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button class="page-button ${i === currentPage ? 'active' : ''}" 
+                            onclick="changePage(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            if (endPage < lastPage) {
+                if (endPage < lastPage - 1) {
+                    paginationHTML += `<span style="padding: 12px; color: #aaa;">...</span>`;
+                }
+                paginationHTML += `<button class="page-button" onclick="changePage(${lastPage})">${lastPage}</button>`;
+            }
+            
+            // Next button
+            paginationHTML += `
+                <button class="page-button" ${!hasNextPage ? 'disabled' : ''} 
+                        onclick="changePage(${currentPage + 1})">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+            
+            paginationContainer.innerHTML = paginationHTML;
+        }
+        
+        // Function to change page
+        function changePage(page) {
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                if (currentTab === 'seasonal') {
+                    loadSeasonalContent();
+                } else if (currentSearchTerm || selectedGenres.length > 0 || yearInput.value || statusSelect.value) {
+                    searchMedia(currentSearchTerm, currentPage);
+                } else {
+                    loadTrendingContent(currentPage);
+                }
+            }
+        }
+        
+        // Function to display detailed media view
+        function displayMediaDetail() {
+            const media = currentMedia;
+            const title = media.title.english || media.title.romaji;
+            const nativeTitle = media.title.native || '';
+            const description = media.description ? media.description.replace(/<[^>]*>/g, '').substring(0, 500) + '...' : 'No description available.';
+            const genres = media.genres ? media.genres.join(', ') : 'N/A';
+            const score = media.averageScore ? (media.averageScore / 10).toFixed(1) : 'N/A';
+            const meanScore = media.meanScore ? (media.meanScore / 10).toFixed(1) : 'N/A';
+            const startDate = media.startDate && media.startDate.year ? 
+                `${media.startDate.year}-${media.startDate.month || '??'}-${media.startDate.day || '??'}` : 'Unknown';
+            const endDate = media.endDate && media.endDate.year ? 
+                `${media.endDate.year}-${media.endDate.month || '??'}-${media.endDate.day || '??'}` : 'Unknown';
+            
+            modalBody.innerHTML = `
+                <div class="modal-header">
+                    <img src="${media.bannerImage || media.coverImage.extraLarge || media.coverImage.large}" alt="${title}" class="modal-banner" onerror="this.style.display='none'">
+                    <div class="modal-overlay"></div>
+                    <div class="modal-content-inner">
+                        <div class="modal-image">
+                            <img src="${media.coverImage.extraLarge || media.coverImage.large}" alt="${title}" loading="lazy">
+                        </div>
+                        <div class="modal-info">
+                            <h1 class="modal-title">${title}</h1>
+                            ${nativeTitle ? `<h2 class="modal-native-title">${nativeTitle}</h2>` : ''}
+                            <div class="modal-details">
+                                <div class="modal-detail">${media.format || 'N/A'}</div>
+                                <div class="modal-detail">${media.status || 'Unknown'}</div>
+                                <div class="modal-detail">${startDate} - ${endDate}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h3><i class="fas fa-info-circle"></i> Overview</h3>
+                    <p class="modal-description">${description}</p>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">${score}/10</div>
+                            <div class="stat-label">Average Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${meanScore}/10</div>
+                            <div class="stat-label">Mean Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${media.popularity?.toLocaleString() || 'N/A'}</div>
+                            <div class="stat-label">Popularity</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${media.favourites?.toLocaleString() || 'N/A'}</div>
+                            <div class="stat-label">Favorites</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h3><i class="fas fa-tags"></i> Genres</h3>
+                    <div class="genres-list">
+                        ${genres.split(', ').map(genre => `
+                            <div class="genre-tag">${genre}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <h3><i class="fas fa-list"></i> ${currentTab === 'anime' ? 'Episodes' : 'Chapters/Volumes'}</h3>
+                    <div class="episodes-info">
+                        <p style="font-size: 1.2rem; margin-bottom: 10px;">
+                            ${currentTab === 'anime' ? 
+                                `${media.episodes || '?'} episodes` : 
+                                `${media.chapters || '?'} chapters / ${media.volumes || '?'} volumes`}
+                        </p>
+                        <p style="color: #aaa;">
+                            ${media.startDate && media.startDate.year ? `Started: ${startDate}` : ''}
+                            ${media.endDate && media.endDate.year ? ` • Ended: ${endDate}` : ''}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Event listeners
+        searchButton.addEventListener('click', () => {
+            const searchTerm = searchInput.value.trim();
+            currentSearchTerm = searchTerm;
+            currentPage = 1;
+            if (currentTab === 'seasonal') {
+                loadSeasonalContent();
+            } else if (currentTab === 'favorites') {
+                renderFavorites();
+            } else {
+                if (searchTerm || selectedGenres.length > 0 || yearInput.value || statusSelect.value) {
+                    searchMedia(searchTerm, currentPage);
+                } else {
+                    loadTrendingContent(currentPage);
+                }
+            }
+        });
+        
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const searchTerm = searchInput.value.trim();
+                currentSearchTerm = searchTerm;
+                currentPage = 1;
+                if (currentTab === 'seasonal') {
+                    loadSeasonalContent();
+                } else if (currentTab === 'favorites') {
+                    renderFavorites();
+                } else {
+                    if (searchTerm || selectedGenres.length > 0 || yearInput.value || statusSelect.value) {
+                        searchMedia(searchTerm, currentPage);
+                    } else {
+                        loadTrendingContent(currentPage);
+                    }
+                }
+            }
+        });
+        
+        // Modal close functionality
+        closeModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+            if (e.target === addFavoriteModal) {
+                addFavoriteModal.style.display = 'none';
+            }
+            if (e.target === confirmationDialog) {
+                confirmationDialog.style.display = 'none';
+                itemToRemove = null;
+            }
+        });
+        
+        // Make functions globally accessible
+        window.changePage = changePage;
+        
+        // Initial setup
+        window.addEventListener('DOMContentLoaded', () => {
+            // Show loading skeleton first
+            showLoadingSkeleton();
+            
+            // Then load content after a small delay
+            setTimeout(() => {
+                loadTrendingContent(1);
+                renderHistoryDropdown();
+                
+                // Register service worker
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(registration => console.log('SW registered'))
+                        .catch(err => console.log('SW registration failed'));
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

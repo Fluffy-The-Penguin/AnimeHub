@@ -1849,16 +1849,16 @@
 
         // Get status text
         function getStatusText(status) {
-            const statusMap = {
-                'watching': 'Watching',
-                'reading': 'Reading',
-                'completed': 'Completed',
-                'planning': 'Planning',
-                'paused': 'Paused',
-                'dropped': 'Dropped'
-            };
-            return statusMap[status] || status;
-        }
+    const statusMap = {
+        'planning': 'Planning',
+        'watching': 'Watching',
+        'reading': 'Reading',
+        'completed': 'Completed',
+        'paused': 'Paused',
+        'dropped': 'Dropped'
+    };
+    return statusMap[status] || status;
+}
 
         // Load content based on current tab
         function loadContent() {
@@ -2992,49 +2992,78 @@
         }
 
         // Update status
-        async function updateStatus(id, type, newStatus) {
-            const list = type === 'anime' ? animeList : mangaList;
-            const item = list.find(i => i.id === id);
-            if (item) {
-                item.status = newStatus;
-                
-                // Update status on AniList
-                try {
-                    const response = await fetch('https://graphql.anilist.co', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
-                        },
-                        body: JSON.stringify({
-                            query: `
-                                mutation ($mediaId: Int, $status: MediaListStatus, $type: MediaType) {
-                                    SaveMediaListEntry(mediaId: $mediaId, status: $status, type: $type) {
-                                        id
-                                        status
-                                    }
-                                }
-                            `,
-                            variables: {
-                                mediaId: id,
-                                status: newStatus.toUpperCase(),
-                                type: type.toUpperCase()
-                            }
-                        })
-                    });
-                    const data = await response.json();
-                    if (data.errors) {
-                        console.error('Error updating status:', data.errors);
-                        showNotification('Failed to update status');
-                    } else {
-                        showNotification(`Updated status to ${newStatus}`);
-                    }
-                } catch (error) {
-                    console.error('Error updating status:', error);
-                    showNotification('Network error updating status');
-                }
-            }
+async function updateStatus(id, type, newStatus) {
+    const list = type === 'anime' ? animeList : mangaList;
+    const item = list.find(i => i.id === id);
+    
+    if (!item) {
+        showNotification('Item not found in your list');
+        return;
+    }
+
+    if (!currentUser) {
+        showNotification('Please login to update status');
+        return;
+    }
+
+    try {
+        // First convert the status to AniList's format
+        const statusMap = {
+            'planning': 'PLANNING',
+            'watching': 'CURRENT',
+            'reading': 'CURRENT',
+            'completed': 'COMPLETED',
+            'paused': 'PAUSED',
+            'dropped': 'DROPPED'
+        };
+        
+        const anilistStatus = statusMap[newStatus];
+        if (!anilistStatus) {
+            showNotification('Invalid status');
+            return;
         }
+
+        const response = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+            },
+            body: JSON.stringify({
+                query: `
+                    mutation ($mediaId: Int, $status: MediaListStatus, $type: MediaType) {
+                        SaveMediaListEntry(mediaId: $mediaId, status: $status, type: $type) {
+                            id
+                            status
+                        }
+                    }
+                `,
+                variables: {
+                    mediaId: id,
+                    status: anilistStatus,
+                    type: type.toUpperCase()
+                }
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.errors) {
+            console.error('Error updating status:', data.errors);
+            showNotification(`Failed to update status: ${data.errors[0].message}`);
+        } else {
+            // Update local state only after successful API update
+            item.status = newStatus;
+            showNotification(`Status updated to ${getStatusText(newStatus)}`);
+            
+            // Refresh the list display
+            loadListContent();
+        }
+    } catch (error) {
+        console.error('Error updating status:', error);
+        showNotification('Network error updating status');
+    }
+}
 
         // Remove from list
         async function removeFromList(id, type) {

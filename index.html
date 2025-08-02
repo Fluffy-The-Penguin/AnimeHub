@@ -1168,45 +1168,31 @@ function loginUser() {
         // Exchange authorization code for access token
 async function exchangeCodeForToken(code) {
     try {
-        console.log('Exchanging code for token...');
-        console.log('Code received:', code);
-        console.log('Redirect URI:', 'https://streamall-phi.vercel.app/');
-        
-        const response = await fetch('https://anilist.co/api/v2/oauth/token', {
+        const response = await fetch('/api/exchange-token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                grant_type: 'authorization_code',
-                client_id: '29049', // Replace with YOUR actual Client ID
-                client_secret: '95OkrXqDFrCYISHz6ltOnuCpEtuF0ji524bIs2Q8', // Replace with YOUR actual Client Secret
-                redirect_uri: 'https://streamall-phi.vercel.app/', // Exact match with AniList settings
                 code: code
             })
         });
         
         const data = await response.json();
-        console.log('Token response:', data);
         
         if (data.access_token) {
             localStorage.setItem('anilist_token', data.access_token);
             fetchUserData(data.access_token);
+            // Clean URL without code parameter
             window.history.pushState({}, document.title, window.location.pathname);
+            return true;
         } else {
             console.error('Failed to get access token:', data);
-            // Show detailed error message
-            if (data.error) {
-                showNotification(`Login failed: ${data.error} - ${data.message}`);
-                console.error('OAuth Error:', data.error, data.message);
-            } else {
-                showNotification('Login failed. Please check console for details.');
-                console.error('Unexpected error:', data);
-            }
+            return false;
         }
     } catch (error) {
         console.error('Error in exchangeCodeForToken:', error);
-        showNotification('Login failed. Check browser console for details.');
+        return false;
     }
 }
         // Fetch user data

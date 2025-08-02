@@ -3181,43 +3181,65 @@ async function updateStatus(id, type, newStatus) {
         }
 
         // Render pagination
-        function renderPagination(pageInfo, type) {
-            const paginationContainer = document.getElementById(`${type}-pagination`);
-            if (!paginationContainer) return;
-            if (!pageInfo || pageInfo.lastPage <= 1) {
-                paginationContainer.innerHTML = '';
-                return;
-            }
-            let paginationHTML = '';
-            // Previous button
-            if (pageInfo.currentPage > 1) {
-                paginationHTML += `
-                    <button class="page-btn" onclick="changePage('${type}', ${pageInfo.currentPage - 1})">
-                        <i class="fas fa-chevron-left"></i> Prev
-                    </button>
-                `;
-            }
-            // Page numbers
-            const startPage = Math.max(1, pageInfo.currentPage - 2);
-            const endPage = Math.min(pageInfo.lastPage, pageInfo.currentPage + 2);
-            for (let i = startPage; i <= endPage; i++) {
-                paginationHTML += `
-                    <button class="page-btn ${i === pageInfo.currentPage ? 'active' : ''}" 
-                            onclick="changePage('${type}', ${i})">
-                        ${i}
-                    </button>
-                `;
-            }
-            // Next button
-            if (pageInfo.hasNextPage) {
-                paginationHTML += `
-                    <button class="page-btn" onclick="changePage('${type}', ${pageInfo.currentPage + 1})">
-                        Next <i class="fas fa-chevron-right"></i>
-                    </button>
-                `;
-            }
-            paginationContainer.innerHTML = paginationHTML;
-        }
+function renderPagination(pageInfo, type) {
+    const paginationContainer = document.getElementById(`${type}-pagination`);
+    if (!paginationContainer) return;
+    if (!pageInfo || pageInfo.lastPage <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = '';
+    
+    // First page button
+    paginationHTML += `
+        <button class="page-btn ${pageInfo.currentPage === 1 ? 'active' : ''}" 
+                onclick="changePage('${type}', 1)" ${pageInfo.currentPage === 1 ? 'disabled' : ''}>
+            First
+        </button>
+    `;
+    
+    // Previous button
+    if (pageInfo.currentPage > 1) {
+        paginationHTML += `
+            <button class="page-btn" onclick="changePage('${type}', ${pageInfo.currentPage - 1})">
+                <i class="fas fa-chevron-left"></i> Prev
+            </button>
+        `;
+    }
+    
+    // Page numbers (limited to show nearby pages)
+    const startPage = Math.max(1, pageInfo.currentPage - 2);
+    const endPage = Math.min(pageInfo.lastPage, pageInfo.currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <button class="page-btn ${i === pageInfo.currentPage ? 'active' : ''}" 
+                    onclick="changePage('${type}', ${i})">
+                ${i}
+            </button>
+        `;
+    }
+    
+    // Next button
+    if (pageInfo.hasNextPage) {
+        paginationHTML += `
+            <button class="page-btn" onclick="changePage('${type}', ${pageInfo.currentPage + 1})">
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+    }
+    
+    // Last page button
+    paginationHTML += `
+        <button class="page-btn ${pageInfo.currentPage === pageInfo.lastPage ? 'active' : ''}" 
+                onclick="changePage('${type}', ${pageInfo.lastPage})" ${pageInfo.currentPage === pageInfo.lastPage ? 'disabled' : ''}>
+            Last
+        </button>
+    `;
+    
+    paginationContainer.innerHTML = paginationHTML;
+}
 
         // Change page
         function changePage(type, page) {

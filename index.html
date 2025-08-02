@@ -826,10 +826,40 @@
             gap: 15px;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .list-filter-group {
             flex: 1;
             min-width: 200px;
+        }
+        .list-search-container {
+            position: relative;
+            flex: 2;
+        }
+        .list-search-container input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--light);
+            font-size: 0.9rem;
+        }
+        .list-search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+        .list-filter-select {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--light);
+            font-size: 0.9rem;
+            cursor: pointer;
         }
         .list-grid {
             display: grid;
@@ -932,6 +962,7 @@
             background: rgba(0, 0, 0, 0.2);
             color: var(--light);
             font-size: 0.9rem;
+            cursor: pointer;
         }
         .list-item-btn {
             padding: 8px 12px;
@@ -991,6 +1022,9 @@
             .cards-grid, .favorites-grid {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             }
+            .list-grid {
+                grid-template-columns: 1fr;
+            }
         }
         @media (max-width: 480px) {
             .section-header {
@@ -1004,6 +1038,13 @@
             .modal-details {
                 flex-direction: column;
                 gap: 5px;
+            }
+            .list-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .list-filter-group {
+                min-width: 100%;
             }
         }
     </style>
@@ -1112,6 +1153,26 @@
                             <option value="FINISHED">Finished</option>
                             <option value="RELEASING">Releasing</option>
                             <option value="NOT_YET_RELEASED">Not Yet Released</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="score">Minimum Score</label>
+                        <select id="score">
+                            <option value="0">Any Score</option>
+                            <option value="70">7+</option>
+                            <option value="80">8+</option>
+                            <option value="90">9+</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="sort">Sort By</label>
+                        <select id="sort">
+                            <option value="POPULARITY_DESC">Popularity</option>
+                            <option value="SCORE_DESC">Score</option>
+                            <option value="TRENDING_DESC">Trending</option>
+                            <option value="FAVOURITES_DESC">Favorites</option>
+                            <option value="START_DATE_DESC">Newest</option>
+                            <option value="TITLE_ROMAJI">Title</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -1303,6 +1364,8 @@
             document.getElementById('format').addEventListener('change', loadContent);
             document.getElementById('year').addEventListener('change', loadContent);
             document.getElementById('status').addEventListener('change', loadContent);
+            document.getElementById('score').addEventListener('change', loadContent);
+            document.getElementById('sort').addEventListener('change', loadContent);
             // Genre tag clicks
             genreTagsContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('genre-tag')) {
@@ -1551,6 +1614,69 @@
                     }));
                 }
                 
+                // Fetch favorites
+                const favoritesResponse = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query ($userId: Int) {
+                                User(id: $userId) {
+                                    favourites {
+                                        anime {
+                                            nodes {
+                                                id
+                                                title {
+                                                    romaji
+                                                    english
+                                                }
+                                                coverImage {
+                                                    large
+                                                }
+                                            }
+                                        }
+                                        manga {
+                                            nodes {
+                                                id
+                                                title {
+                                                    romaji
+                                                    english
+                                                }
+                                                coverImage {
+                                                    large
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        `,
+                        variables: {
+                            userId: currentUser.id
+                        }
+                    })
+                });
+                const favoritesData = await favoritesResponse.json();
+                if (favoritesData.data?.User?.favourites) {
+                    favoritesList = [
+                        ...favoritesData.data.User.favourites.anime.nodes.map(media => ({
+                            id: media.id,
+                            title: media.title.english || media.title.romaji || 'Untitled',
+                            image: media.coverImage.large,
+                            type: 'anime'
+                        })),
+                        ...favoritesData.data.User.favourites.manga.nodes.map(media => ({
+                            id: media.id,
+                            title: media.title.english || media.title.romaji || 'Untitled',
+                            image: media.coverImage.large,
+                            type: 'manga'
+                        }))
+                    ];
+                }
+                
                 // Update UI with fetched data
                 loadProfileStats();
                 loadFavoritesDisplay();
@@ -1693,7 +1819,32 @@
 
         // Load favorites display
         function loadFavoritesDisplay() {
-            favoritesDisplay.innerHTML = '<div class="empty-state"><i class="fas fa-heart"></i><p>No favorites yet</p></div>';
+            if (favoritesList.length === 0) {
+                favoritesDisplay.innerHTML = '<div class="empty-state"><i class="fas fa-heart"></i><p>No favorites yet</p></div>';
+                return;
+            }
+            
+            favoritesDisplay.innerHTML = favoritesList.slice(0, 4).map(favorite => `
+                <div class="favorite-card" data-id="${favorite.id}">
+                    <img src="${favorite.image}" alt="${favorite.title}" class="favorite-img">
+                    <div class="favorite-content">
+                        <h3 class="favorite-title">${favorite.title}</h3>
+                        <div class="favorite-meta">
+                            <span class="status-badge status-${favorite.type === 'anime' ? 'watching' : 'reading'}">
+                                ${favorite.type === 'anime' ? 'Anime' : 'Manga'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add click events to favorite cards
+            document.querySelectorAll('.favorite-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const id = card.dataset.id;
+                    openMediaDetails(id);
+                });
+            });
         }
 
         // Get status text
@@ -1901,17 +2052,21 @@
                 const format = document.getElementById('format').value;
                 const year = document.getElementById('year').value;
                 const status = document.getElementById('status').value;
+                const score = document.getElementById('score').value;
+                const sort = document.getElementById('sort').value;
                 const selectedGenres = Array.from(document.querySelectorAll('.genre-tag.active'))
                     .map(tag => tag.dataset.genre);
                 // Build query variables
                 const variables = {
                     page: page,
                     perPage: 24,
-                    type: 'ANIME'
+                    type: 'ANIME',
+                    sort: sort
                 };
                 if (format !== 'ALL') variables.format = format;
                 if (year) variables.seasonYear = parseInt(year);
                 if (status !== 'ALL') variables.status = status;
+                if (score > 0) variables.averageScore_greater = parseInt(score);
                 if (selectedGenres.length > 0) variables.genre_in = selectedGenres;
                 if (currentSearchTerm) variables.search = currentSearchTerm;
                 const response = await fetch('https://graphql.anilist.co', {
@@ -1922,7 +2077,7 @@
                     },
                     body: JSON.stringify({
                         query: `
-                            query ($page: Int, $perPage: Int, $type: MediaType, $search: String, $format: MediaFormat, $seasonYear: Int, $status: MediaStatus, $genre_in: [String]) {
+                            query ($page: Int, $perPage: Int, $type: MediaType, $search: String, $format: MediaFormat, $seasonYear: Int, $status: MediaStatus, $genre_in: [String], $averageScore_greater: Int, $sort: [MediaSort]) {
                                 Page(page: $page, perPage: $perPage) {
                                     pageInfo {
                                         total
@@ -1937,6 +2092,8 @@
                                         seasonYear: $seasonYear
                                         status: $status
                                         genre_in: $genre_in
+                                        averageScore_greater: $averageScore_greater
+                                        sort: $sort
                                     ) {
                                         id
                                         title {
@@ -2000,17 +2157,21 @@
                 const format = document.getElementById('format').value;
                 const year = document.getElementById('year').value;
                 const status = document.getElementById('status').value;
+                const score = document.getElementById('score').value;
+                const sort = document.getElementById('sort').value;
                 const selectedGenres = Array.from(document.querySelectorAll('.genre-tag.active'))
                     .map(tag => tag.dataset.genre);
                 // Build query variables
                 const variables = {
                     page: page,
                     perPage: 24,
-                    type: 'MANGA'
+                    type: 'MANGA',
+                    sort: sort
                 };
                 if (format !== 'ALL') variables.format = format;
                 if (year) variables.seasonYear = parseInt(year);
                 if (status !== 'ALL') variables.status = status;
+                if (score > 0) variables.averageScore_greater = parseInt(score);
                 if (selectedGenres.length > 0) variables.genre_in = selectedGenres;
                 if (currentSearchTerm) variables.search = currentSearchTerm;
                 const response = await fetch('https://graphql.anilist.co', {
@@ -2021,7 +2182,7 @@
                     },
                     body: JSON.stringify({
                         query: `
-                            query ($page: Int, $perPage: Int, $type: MediaType, $search: String, $format: MediaFormat, $seasonYear: Int, $status: MediaStatus, $genre_in: [String]) {
+                            query ($page: Int, $perPage: Int, $type: MediaType, $search: String, $format: MediaFormat, $seasonYear: Int, $status: MediaStatus, $genre_in: [String], $averageScore_greater: Int, $sort: [MediaSort]) {
                                 Page(page: $page, perPage: $perPage) {
                                     pageInfo {
                                         total
@@ -2036,6 +2197,8 @@
                                         seasonYear: $seasonYear
                                         status: $status
                                         genre_in: $genre_in
+                                        averageScore_greater: $averageScore_greater
+                                        sort: $sort
                                     ) {
                                         id
                                         title {
@@ -2073,148 +2236,152 @@
             }
         }
 
-// Load seasonal content
-function loadSeasonalContent() {
-    contentArea.innerHTML = `
-        <div class="section-header">
-            <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Seasonal Anime</h2>
-            <div class="season-info" id="season-info"></div>
-            <a href="#" class="view-all">View All</a>
-        </div>
-        <div class="cards-grid" id="seasonal-grid">
-            <div class="loading">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Loading seasonal content...</p>
-            </div>
-        </div>
-    `;
-    loadSeasonalPage();
-}
-
-// Load seasonal page with debugging
-async function loadSeasonalPage() {
-    try {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        let season, year;
-        
-        // Determine current season and year
-        if (currentMonth >= 2 && currentMonth <= 4) {  // March-May
-            season = 'SPRING';
-            year = now.getFullYear();
-        } else if (currentMonth >= 5 && currentMonth <= 7) {  // June-August
-            season = 'SUMMER';
-            year = now.getFullYear();
-        } else if (currentMonth >= 8 && currentMonth <= 10) {  // September-November
-            season = 'FALL';
-            year = now.getFullYear();
-        } else {  // December-February
-            season = 'WINTER';
-            year = (currentMonth === 0 || currentMonth === 1) ? now.getFullYear() : now.getFullYear() + 1;
-        }
-
-        // Display season info for debugging
-        document.getElementById('season-info').textContent = `Showing ${season} ${year}`;
-
-        // Get filters
-        const format = document.getElementById('format').value;
-        const status = document.getElementById('status').value;
-        const selectedGenres = Array.from(document.querySelectorAll('.genre-tag.active'))
-            .map(tag => tag.dataset.genre);
-
-        // Prepare query variables
-        const variables = {
-            season: season,
-            seasonYear: year,
-            type: 'ANIME',
-            sort: 'POPULARITY_DESC',
-            page: 1,
-            perPage: 24
-        };
-
-        // Add optional filters
-        if (format !== 'ALL') variables.format = format;
-        if (status !== 'ALL') variables.status = status;
-        if (selectedGenres.length > 0) variables.genre_in = selectedGenres;
-
-        console.log('Seasonal query variables:', variables);
-
-        const response = await fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                query: `
-                    query (
-                        $season: MediaSeason,
-                        $seasonYear: Int,
-                        $type: MediaType,
-                        $format: MediaFormat,
-                        $status: MediaStatus,
-                        $genre_in: [String],
-                        $page: Int,
-                        $perPage: Int,
-                        $sort: [MediaSort]
-                    ) {
-                        Page(page: $page, perPage: $perPage) {
-                            media(
-                                season: $season
-                                seasonYear: $seasonYear
-                                type: $type
-                                format: $format
-                                status: $status
-                                genre_in: $genre_in
-                                sort: $sort
-                            ) {
-                                id
-                                title {
-                                    romaji
-                                    english
-                                }
-                                coverImage {
-                                    large
-                                    color
-                                }
-                                averageScore
-                                episodes
-                                seasonYear
-                                format
-                                status
-                            }
-                        }
-                    }
-                `,
-                variables: variables
-            })
-        });
-        
-        const data = await response.json();
-        console.log('Seasonal API response:', data);
-
-        if (data.data && data.data.Page && data.data.Page.media && data.data.Page.media.length > 0) {
-            renderCards(data.data.Page.media, 'seasonal-grid');
-        } else {
-            document.getElementById('seasonal-grid').innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-calendar-alt"></i>
-                    <p>No seasonal content found for ${season} ${year}</p>
-                    <p>Try adjusting your filters or check back later!</p>
+        // Load seasonal content
+        function loadSeasonalContent() {
+            contentArea.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-calendar-alt"></i> Seasonal Anime</h2>
+                    <div class="season-info" id="season-info"></div>
+                    <a href="#" class="view-all">View All</a>
+                </div>
+                <div class="cards-grid" id="seasonal-grid">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading seasonal content...</p>
+                    </div>
                 </div>
             `;
+            loadSeasonalPage();
         }
-    } catch (error) {
-        console.error('Error loading seasonal content:', error);
-        document.getElementById('seasonal-grid').innerHTML = `
-            <div class="error">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Error loading seasonal content</p>
-                <p>${error.message}</p>
-            </div>
-        `;
-    }
-}
+
+        // Load seasonal page with debugging
+        async function loadSeasonalPage() {
+            try {
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                let season, year;
+                
+                // Determine current season and year
+                if (currentMonth >= 2 && currentMonth <= 4) {  // March-May
+                    season = 'SPRING';
+                    year = now.getFullYear();
+                } else if (currentMonth >= 5 && currentMonth <= 7) {  // June-August
+                    season = 'SUMMER';
+                    year = now.getFullYear();
+                } else if (currentMonth >= 8 && currentMonth <= 10) {  // September-November
+                    season = 'FALL';
+                    year = now.getFullYear();
+                } else {  // December-February
+                    season = 'WINTER';
+                    year = (currentMonth === 0 || currentMonth === 1) ? now.getFullYear() : now.getFullYear() + 1;
+                }
+
+                // Display season info for debugging
+                document.getElementById('season-info').textContent = `Showing ${season} ${year}`;
+
+                // Get filters
+                const format = document.getElementById('format').value;
+                const status = document.getElementById('status').value;
+                const score = document.getElementById('score').value;
+                const selectedGenres = Array.from(document.querySelectorAll('.genre-tag.active'))
+                    .map(tag => tag.dataset.genre);
+
+                // Prepare query variables
+                const variables = {
+                    season: season,
+                    seasonYear: year,
+                    type: 'ANIME',
+                    sort: 'POPULARITY_DESC',
+                    page: 1,
+                    perPage: 24
+                };
+
+                // Add optional filters
+                if (format !== 'ALL') variables.format = format;
+                if (status !== 'ALL') variables.status = status;
+                if (score > 0) variables.averageScore_greater = parseInt(score);
+                if (selectedGenres.length > 0) variables.genre_in = selectedGenres;
+
+                console.log('Seasonal query variables:', variables);
+
+                const response = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query (
+                                $season: MediaSeason,
+                                $seasonYear: Int,
+                                $type: MediaType,
+                                $format: MediaFormat,
+                                $status: MediaStatus,
+                                $genre_in: [String],
+                                $averageScore_greater: Int,
+                                $page: Int,
+                                $perPage: Int,
+                                $sort: [MediaSort]
+                            ) {
+                                Page(page: $page, perPage: $perPage) {
+                                    media(
+                                        season: $season
+                                        seasonYear: $seasonYear
+                                        type: $type
+                                        format: $format
+                                        status: $status
+                                        genre_in: $genre_in
+                                        averageScore_greater: $averageScore_greater
+                                        sort: $sort
+                                    ) {
+                                        id
+                                        title {
+                                            romaji
+                                            english
+                                        }
+                                        coverImage {
+                                            large
+                                            color
+                                        }
+                                        averageScore
+                                        episodes
+                                        seasonYear
+                                        format
+                                        status
+                                    }
+                                }
+                            }
+                        `,
+                        variables: variables
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Seasonal API response:', data);
+
+                if (data.data && data.data.Page && data.data.Page.media && data.data.Page.media.length > 0) {
+                    renderCards(data.data.Page.media, 'seasonal-grid');
+                } else {
+                    document.getElementById('seasonal-grid').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-alt"></i>
+                            <p>No seasonal content found for ${season} ${year}</p>
+                            <p>Try adjusting your filters or check back later!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading seasonal content:', error);
+                document.getElementById('seasonal-grid').innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error loading seasonal content</p>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
 
         // Load recent content
         function loadRecentContent() {
@@ -2419,22 +2586,75 @@ async function loadSeasonalPage() {
 
         // Load favorites content
         function loadFavoritesContent() {
-            contentArea.innerHTML = `
-                <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-heart"></i> My Favorites</h2>
-                    <a href="#" class="view-all">View All</a>
-                </div>
-                <div class="cards-grid" id="favorites-grid">
+            if (!currentUser) {
+                contentArea.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-lock"></i>
+                        <p>Please login to view your favorites</p>
+                        <button class="login-btn" id="login-btn-favorites" style="margin-top: 20px;">
+                            <i class="fab fa-anilist"></i> Login with AniList
+                        </button>
+                    </div>
+                `;
+                document.getElementById('login-btn-favorites').addEventListener('click', loginUser);
+                return;
+            }
+
+            if (favoritesList.length === 0) {
+                contentArea.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-heart"></i>
                         <p>No favorites yet</p>
                     </div>
+                `;
+                return;
+            }
+
+            contentArea.innerHTML = `
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-heart"></i> My Favorites</h2>
+                </div>
+                <div class="cards-grid" id="favorites-grid">
+                    ${favoritesList.map(favorite => `
+                        <div class="card" data-id="${favorite.id}">
+                            <img src="${favorite.image}" alt="${favorite.title}" class="card-img">
+                            <div class="card-content">
+                                <h3 class="card-title">${favorite.title}</h3>
+                                <div class="card-meta">
+                                    <span>${favorite.type === 'anime' ? 'Anime' : 'Manga'}</span>
+                                    <span class="rating"><i class="fas fa-heart"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             `;
+
+            // Add click events to favorite cards
+            document.querySelectorAll('#favorites-grid .card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const id = card.dataset.id;
+                    openMediaDetails(id);
+                });
+            });
         }
 
         // Load lists content
         function loadListsContent() {
+            if (!currentUser) {
+                contentArea.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-lock"></i>
+                        <p>Please login to view your lists</p>
+                        <button class="login-btn" id="login-btn-lists" style="margin-top: 20px;">
+                            <i class="fab fa-anilist"></i> Login with AniList
+                        </button>
+                    </div>
+                `;
+                document.getElementById('login-btn-lists').addEventListener('click', loginUser);
+                return;
+            }
+
             contentArea.innerHTML = `
                 <div class="section-header">
                     <h2 class="section-title"><i class="fas fa-list"></i> My Lists</h2>
@@ -2444,15 +2664,16 @@ async function loadSeasonalPage() {
                     <button class="tab-btn" data-tab="manga">Manga List</button>
                 </div>
                 <div class="list-filters">
-                    <div class="list-filter-group">
+                    <div class="list-filter-group list-search-container">
+                        <i class="fas fa-search"></i>
                         <input type="text" id="list-search" placeholder="Search...">
                     </div>
                     <div class="list-filter-group">
-                        <select id="list-status-filter">
+                        <select id="list-status-filter" class="list-filter-select">
                             <option value="all">All Statuses</option>
                             <option value="planning">Planning</option>
-                            <option value="watching">Watching</option>
-                            <option value="reading">Reading</option>
+                            <option value="watching" class="anime-only">Watching</option>
+                            <option value="reading" class="manga-only">Reading</option>
                             <option value="completed">Completed</option>
                             <option value="paused">Paused</option>
                             <option value="dropped">Dropped</option>
@@ -2466,6 +2687,10 @@ async function loadSeasonalPage() {
                     <!-- Pagination will be added here -->
                 </div>
             `;
+            
+            // Update status filter options based on active tab
+            updateStatusFilterOptions();
+            
             // Set up list filters
             document.getElementById('list-search').addEventListener('input', () => {
                 loadListContent();
@@ -2479,11 +2704,30 @@ async function loadSeasonalPage() {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentPage = 1; // Reset to first page when switching tabs
+                    updateStatusFilterOptions();
                     loadListContent();
                 });
             });
             // Load initial list content
             loadListContent();
+        }
+
+        // Update status filter options based on active tab
+        function updateStatusFilterOptions() {
+            const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'anime';
+            const statusFilter = document.getElementById('list-status-filter');
+            
+            // Show/hide appropriate options
+            const watchingOption = statusFilter.querySelector('.anime-only');
+            const readingOption = statusFilter.querySelector('.manga-only');
+            
+            if (activeTab === 'anime') {
+                watchingOption.style.display = 'block';
+                readingOption.style.display = 'none';
+            } else {
+                watchingOption.style.display = 'none';
+                readingOption.style.display = 'block';
+            }
         }
 
         // Load list content
@@ -2649,59 +2893,190 @@ async function loadSeasonalPage() {
         }
 
         // Update progress
-        function updateProgress(id, type, element) {
+        async function updateProgress(id, type, element) {
             const value = parseInt(element.value);
             if (isNaN(value)) return;
             const list = type === 'anime' ? animeList : mangaList;
             const item = list.find(i => i.id === id);
             if (item) {
                 // Ensure progress doesn't exceed maxProgress
-                if (value > item.maxProgress) {
+                if (item.maxProgress && value > item.maxProgress) {
                     element.value = item.maxProgress;
                     return;
                 }
                 item.progress = value;
-                // In real implementation, sync with AniList API
-                // For now, we'll just show notification
-                showNotification(`Updated ${type} progress`);
+                
+                // Update progress on AniList
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($mediaId: Int, $progress: Int, $type: MediaType) {
+                                    SaveMediaListEntry(mediaId: $mediaId, progress: $progress, type: $type) {
+                                        id
+                                        progress
+                                    }
+                                }
+                            `,
+                            variables: {
+                                mediaId: id,
+                                progress: value,
+                                type: type.toUpperCase()
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error updating progress:', data.errors);
+                        showNotification('Failed to update progress');
+                    } else {
+                        showNotification(`Updated ${type} progress`);
+                    }
+                } catch (error) {
+                    console.error('Error updating progress:', error);
+                    showNotification('Network error updating progress');
+                }
             }
         }
 
         // Update score
-        function updateScore(id, type, element) {
+        async function updateScore(id, type, element) {
             const value = parseFloat(element.value);
             if (isNaN(value)) return;
             const list = type === 'anime' ? animeList : mangaList;
             const item = list.find(i => i.id === id);
             if (item) {
                 item.score = value;
-                // In real implementation, sync with AniList API
-                showNotification(`Updated ${type} score`);
+                
+                // Update score on AniList
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($mediaId: Int, $score: Float, $type: MediaType) {
+                                    SaveMediaListEntry(mediaId: $mediaId, score: $score, type: $type) {
+                                        id
+                                        score
+                                    }
+                                }
+                            `,
+                            variables: {
+                                mediaId: id,
+                                score: value,
+                                type: type.toUpperCase()
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error updating score:', data.errors);
+                        showNotification('Failed to update score');
+                    } else {
+                        showNotification(`Updated ${type} score`);
+                    }
+                } catch (error) {
+                    console.error('Error updating score:', error);
+                    showNotification('Network error updating score');
+                }
             }
         }
 
         // Update status
-        function updateStatus(id, type, newStatus) {
+        async function updateStatus(id, type, newStatus) {
             const list = type === 'anime' ? animeList : mangaList;
             const item = list.find(i => i.id === id);
             if (item) {
                 item.status = newStatus;
-                // In real implementation, sync with AniList API
-                showNotification(`Updated status to ${newStatus}`);
+                
+                // Update status on AniList
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($mediaId: Int, $status: MediaListStatus, $type: MediaType) {
+                                    SaveMediaListEntry(mediaId: $mediaId, status: $status, type: $type) {
+                                        id
+                                        status
+                                    }
+                                }
+                            `,
+                            variables: {
+                                mediaId: id,
+                                status: newStatus.toUpperCase(),
+                                type: type.toUpperCase()
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error updating status:', data.errors);
+                        showNotification('Failed to update status');
+                    } else {
+                        showNotification(`Updated status to ${newStatus}`);
+                    }
+                } catch (error) {
+                    console.error('Error updating status:', error);
+                    showNotification('Network error updating status');
+                }
             }
         }
 
         // Remove from list
-        function removeFromList(id, type) {
+        async function removeFromList(id, type) {
             if (confirm('Are you sure you want to remove this item from your list?')) {
-                if (type === 'anime') {
-                    animeList = animeList.filter(item => item.id !== id);
-                } else {
-                    mangaList = mangaList.filter(item => item.id !== id);
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($mediaId: Int, $type: MediaType) {
+                                    DeleteMediaListEntry(mediaId: $mediaId, type: $type) {
+                                        deleted
+                                    }
+                                }
+                            `,
+                            variables: {
+                                mediaId: id,
+                                type: type.toUpperCase()
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error removing from list:', data.errors);
+                        showNotification('Failed to remove from list');
+                    } else {
+                        if (type === 'anime') {
+                            animeList = animeList.filter(item => item.id !== id);
+                        } else {
+                            mangaList = mangaList.filter(item => item.id !== id);
+                        }
+                        loadListContent();
+                        showNotification(`${type === 'anime' ? 'Anime' : 'Manga'} removed from list`);
+                    }
+                } catch (error) {
+                    console.error('Error removing from list:', error);
+                    showNotification('Network error removing from list');
                 }
-                // In real implementation, sync with AniList API
-                loadListContent();
-                showNotification(`${type === 'anime' ? 'Anime' : 'Manga'} removed from list`);
             }
         }
 
@@ -3025,27 +3400,96 @@ async function loadSeasonalPage() {
         }
 
         // Toggle anime list
-        function toggleAnimeList(media) {
+        async function toggleAnimeList(media) {
+            if (!currentUser) {
+                showNotification('Please login to manage your anime list');
+                return;
+            }
+            
             const existingIndex = animeList.findIndex(item => item.id === media.id);
             if (existingIndex > -1) {
                 // Remove from anime list
-                animeList.splice(existingIndex, 1);
-                showNotification('Removed from anime list');
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($mediaId: Int) {
+                                    DeleteMediaListEntry(mediaId: $mediaId, type: ANIME) {
+                                        deleted
+                                    }
+                                }
+                            `,
+                            variables: {
+                                mediaId: media.id
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error removing from anime list:', data.errors);
+                        showNotification('Failed to remove from anime list');
+                    } else {
+                        animeList.splice(existingIndex, 1);
+                        showNotification('Removed from anime list');
+                    }
+                } catch (error) {
+                    console.error('Error removing from anime list:', error);
+                    showNotification('Network error removing from anime list');
+                }
             } else {
                 // Add to anime list
-                const animeItem = {
-                    id: media.id,
-                    title: media.title.english || media.title.romaji || 'Untitled',
-                    image: media.coverImage.large,
-                    type: 'anime',
-                    status: 'planning',
-                    score: media.averageScore ? (media.averageScore / 10).toFixed(1) : 0,
-                    progress: 0,
-                    maxProgress: media.episodes || 0,
-                    createdAt: new Date().toISOString()
-                };
-                animeList.push(animeItem);
-                showNotification('Added to anime list!');
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($mediaId: Int, $status: MediaListStatus) {
+                                    SaveMediaListEntry(mediaId: $mediaId, status: $status, type: ANIME) {
+                                        id
+                                        status
+                                        progress
+                                        score
+                                    }
+                                }
+                            `,
+                            variables: {
+                                mediaId: media.id,
+                                status: 'PLANNING'
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error adding to anime list:', data.errors);
+                        showNotification('Failed to add to anime list');
+                    } else {
+                        const animeItem = {
+                            id: media.id,
+                            title: media.title.english || media.title.romaji || 'Untitled',
+                            image: media.coverImage.large,
+                            type: 'anime',
+                            status: 'planning',
+                            score: media.averageScore ? (media.averageScore / 10).toFixed(1) : 0,
+                            progress: 0,
+                            maxProgress: media.episodes || 0,
+                            createdAt: new Date().toISOString()
+                        };
+                        animeList.push(animeItem);
+                        showNotification('Added to anime list!');
+                    }
+                } catch (error) {
+                    console.error('Error adding to anime list:', error);
+                    showNotification('Network error adding to anime list');
+                }
             }
             
             // Update button in modal immediately
@@ -3066,27 +3510,96 @@ async function loadSeasonalPage() {
         }
 
         // Toggle manga list
-        function toggleMangaList(media) {
+        async function toggleMangaList(media) {
+            if (!currentUser) {
+                showNotification('Please login to manage your manga list');
+                return;
+            }
+            
             const existingIndex = mangaList.findIndex(item => item.id === media.id);
             if (existingIndex > -1) {
                 // Remove from manga list
-                mangaList.splice(existingIndex, 1);
-                showNotification('Removed from manga list');
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($mediaId: Int) {
+                                    DeleteMediaListEntry(mediaId: $mediaId, type: MANGA) {
+                                        deleted
+                                    }
+                                }
+                            `,
+                            variables: {
+                                mediaId: media.id
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error removing from manga list:', data.errors);
+                        showNotification('Failed to remove from manga list');
+                    } else {
+                        mangaList.splice(existingIndex, 1);
+                        showNotification('Removed from manga list');
+                    }
+                } catch (error) {
+                    console.error('Error removing from manga list:', error);
+                    showNotification('Network error removing from manga list');
+                }
             } else {
                 // Add to manga list
-                const mangaItem = {
-                    id: media.id,
-                    title: media.title.english || media.title.romaji || 'Untitled',
-                    image: media.coverImage.large,
-                    type: 'manga',
-                    status: 'planning',
-                    score: media.averageScore ? (media.averageScore / 10).toFixed(1) : 0,
-                    progress: 0,
-                    maxProgress: media.chapters || 0,
-                    createdAt: new Date().toISOString()
-                };
-                mangaList.push(mangaItem);
-                showNotification('Added to manga list!');
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($mediaId: Int, $status: MediaListStatus) {
+                                    SaveMediaListEntry(mediaId: $mediaId, status: $status, type: MANGA) {
+                                        id
+                                        status
+                                        progress
+                                        score
+                                    }
+                                }
+                            `,
+                            variables: {
+                                mediaId: media.id,
+                                status: 'PLANNING'
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error adding to manga list:', data.errors);
+                        showNotification('Failed to add to manga list');
+                    } else {
+                        const mangaItem = {
+                            id: media.id,
+                            title: media.title.english || media.title.romaji || 'Untitled',
+                            image: media.coverImage.large,
+                            type: 'manga',
+                            status: 'planning',
+                            score: media.averageScore ? (media.averageScore / 10).toFixed(1) : 0,
+                            progress: 0,
+                            maxProgress: media.chapters || 0,
+                            createdAt: new Date().toISOString()
+                        };
+                        mangaList.push(mangaItem);
+                        showNotification('Added to manga list!');
+                    }
+                } catch (error) {
+                    console.error('Error adding to manga list:', error);
+                    showNotification('Network error adding to manga list');
+                }
             }
             
             // Update button in modal immediately
@@ -3107,22 +3620,107 @@ async function loadSeasonalPage() {
         }
 
         // Toggle favorite
-        function toggleFavorite(media) {
+        async function toggleFavorite(media) {
+            if (!currentUser) {
+                showNotification('Please login to manage your favorites');
+                return;
+            }
+            
             const existingIndex = favoritesList.findIndex(item => item.id === media.id);
             if (existingIndex > -1) {
                 // Remove from favorites
-                favoritesList.splice(existingIndex, 1);
-                showNotification('Removed from favorites');
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($animeId: Int, $mangaId: Int) {
+                                    ToggleFavourite(animeId: $animeId, mangaId: $mangaId) {
+                                        anime {
+                                            nodes {
+                                                id
+                                            }
+                                        }
+                                        manga {
+                                            nodes {
+                                                id
+                                            }
+                                        }
+                                    }
+                                }
+                            `,
+                            variables: {
+                                animeId: media.format !== 'MANGA' ? media.id : undefined,
+                                mangaId: media.format === 'MANGA' ? media.id : undefined
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error removing from favorites:', data.errors);
+                        showNotification('Failed to remove from favorites');
+                    } else {
+                        favoritesList.splice(existingIndex, 1);
+                        showNotification('Removed from favorites');
+                    }
+                } catch (error) {
+                    console.error('Error removing from favorites:', error);
+                    showNotification('Network error removing from favorites');
+                }
             } else {
                 // Add to favorites
-                const favoriteItem = {
-                    id: media.id,
-                    title: media.title.english || media.title.romaji || 'Untitled',
-                    image: media.coverImage.large,
-                    type: media.format === 'MANGA' ? 'manga' : 'anime'
-                };
-                favoritesList.push(favoriteItem);
-                showNotification('Added to favorites!');
+                try {
+                    const response = await fetch('https://graphql.anilist.co', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                        },
+                        body: JSON.stringify({
+                            query: `
+                                mutation ($animeId: Int, $mangaId: Int) {
+                                    ToggleFavourite(animeId: $animeId, mangaId: $mangaId) {
+                                        anime {
+                                            nodes {
+                                                id
+                                            }
+                                        }
+                                        manga {
+                                            nodes {
+                                                id
+                                            }
+                                        }
+                                    }
+                                }
+                            `,
+                            variables: {
+                                animeId: media.format !== 'MANGA' ? media.id : undefined,
+                                mangaId: media.format === 'MANGA' ? media.id : undefined
+                            }
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.errors) {
+                        console.error('Error adding to favorites:', data.errors);
+                        showNotification('Failed to add to favorites');
+                    } else {
+                        const favoriteItem = {
+                            id: media.id,
+                            title: media.title.english || media.title.romaji || 'Untitled',
+                            image: media.coverImage.large,
+                            type: media.format === 'MANGA' ? 'manga' : 'anime'
+                        };
+                        favoritesList.push(favoriteItem);
+                        showNotification('Added to favorites!');
+                    }
+                } catch (error) {
+                    console.error('Error adding to favorites:', error);
+                    showNotification('Network error adding to favorites');
+                }
             }
             
             // Update button in modal immediately

@@ -1213,21 +1213,28 @@ async function exchangeCodeForToken(code) {
                             avatar {
                                 large
                             }
-                            options {
-                                theme
-                            }
+                            bannerImage
+                            about
                             statistics {
                                 anime {
                                     count
                                     episodesWatched
+                                    meanScore
                                 }
                                 manga {
                                     count
                                     chaptersRead
+                                    meanScore
                                 }
                             }
                             mediaListOptions {
                                 scoreFormat
+                                animeList {
+                                    sectionOrder
+                                }
+                                mangaList {
+                                    sectionOrder
+                                }
                             }
                         }
                     }
@@ -1240,56 +1247,56 @@ async function exchangeCodeForToken(code) {
         if (data.errors) {
             console.error('API Errors:', data.errors);
             showNotification('Failed to fetch user data: ' + data.errors[0].message);
-            return;
+            return false;
         }
         
         if (data.data?.Viewer) {
             currentUser = data.data.Viewer;
             updateUserUI(true);
             showNotification('Successfully logged in!');
+            return true;
         } else {
             console.error('Unexpected response format:', data);
             showNotification('Failed to fetch user data');
+            return false;
         }
     } catch (error) {
         console.error('Error fetching user data:', error);
         showNotification('Network error fetching user data');
+        return false;
     }
 }
         // Update UI based on login status
         function updateUserUI(isLoggedIn) {
-            if (isLoggedIn && currentUser) {
-                // Update user info
-                userName.textContent = currentUser.name;
-                userSince.textContent = `Member since ${new Date().getFullYear()}`;
-                
-                // Show logout button, hide login button
-                logoutBtn.style.display = 'block';
-                loginBtn.style.display = 'none';
-                
-                // Update profile stats with user data
-                if (currentUser.statistics) {
-                    document.getElementById('profile-anime-count').textContent = currentUser.statistics.anime.episodesWatched || 0;
-                    document.getElementById('profile-manga-count').textContent = currentUser.statistics.manga.chaptersRead || 0;
-                    document.getElementById('profile-favorites-count').textContent = currentFavorites.length;
-                    document.getElementById('profile-watchlist-count').textContent = 0; // No watchlist
-                }
-            } else {
-                // Reset to guest mode
-                userName.textContent = 'Guest User';
-                userSince.textContent = 'Not logged in';
-                
-                // Show login button, hide logout button
-                logoutBtn.style.display = 'none';
-                loginBtn.style.display = 'block';
-                
-                // Reset profile stats
-                document.getElementById('profile-anime-count').textContent = '0';
-                document.getElementById('profile-manga-count').textContent = '0';
-                document.getElementById('profile-favorites-count').textContent = currentFavorites.length;
-                document.getElementById('profile-watchlist-count').textContent = '0';
-            }
+    if (isLoggedIn && currentUser) {
+        // Update with available fields
+        userName.textContent = currentUser.name;
+        userSince.textContent = `Member since ${new Date().getFullYear()}`;
+        
+        // Update avatar if available
+        if (currentUser.avatar) {
+            // Update profile picture in UI
         }
+        
+        // Update stats
+        if (currentUser.statistics) {
+            document.getElementById('profile-anime-count').textContent = 
+                currentUser.statistics.anime?.count || 0;
+            document.getElementById('profile-manga-count').textContent = 
+                currentUser.statistics.manga?.count || 0;
+        }
+        
+        // Show/hide appropriate buttons
+        logoutBtn.style.display = 'block';
+        loginBtn.style.display = 'none';
+    } else {
+        // Guest user state
+        userName.textContent = 'Guest User';
+        userSince.textContent = 'Not logged in';
+        logoutBtn.style.display = 'none';
+        loginBtn.style.display = 'block';
+    }
+}
         // Logout user
         function logoutUser() {
             localStorage.removeItem('anilist_token');

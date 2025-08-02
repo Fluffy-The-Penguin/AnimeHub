@@ -2991,7 +2991,7 @@
             }
         }
 
-        // Update status
+// Update status
 async function updateStatus(id, type, newStatus) {
     const list = type === 'anime' ? animeList : mangaList;
     const item = list.find(i => i.id === id);
@@ -3031,8 +3031,8 @@ async function updateStatus(id, type, newStatus) {
             },
             body: JSON.stringify({
                 query: `
-                    mutation ($mediaId: Int, $status: MediaListStatus, $type: MediaType) {
-                        SaveMediaListEntry(mediaId: $mediaId, status: $status, type: $type) {
+                    mutation ($mediaId: Int, $status: MediaListStatus) {
+                        SaveMediaListEntry(mediaId: $mediaId, status: $status) {
                             id
                             status
                         }
@@ -3040,8 +3040,7 @@ async function updateStatus(id, type, newStatus) {
                 `,
                 variables: {
                     mediaId: id,
-                    status: anilistStatus,
-                    type: type.toUpperCase()
+                    status: anilistStatus
                 }
             })
         });
@@ -3064,7 +3063,6 @@ async function updateStatus(id, type, newStatus) {
         showNotification('Network error updating status');
     }
 }
-
         // Remove from list
         async function removeFromList(id, type) {
             if (confirm('Are you sure you want to remove this item from your list?')) {

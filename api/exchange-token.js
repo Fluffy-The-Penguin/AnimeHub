@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     const { code } = req.body;
     const clientId = process.env.ANILIST_CLIENT_ID || '29049'; // Your client ID
     const clientSecret = process.env.ANILIST_CLIENT_SECRET || '95OkrXqDFrCYISHz6ltOnuCpEtuF0ji524bIs2Q8'; // Your client secret
-    const redirectUri = process.env.ANILIST_REDIRECT_URI || 'https://streamall-phi.vercel.app/';
+    const redirectUri = process.env.ANILIST_REDIRECT_URI || 'https://fluffy-animehub.vercel.app/';
 
     try {
         const response = await fetch('https://anilist.co/api/v2/oauth/token', {

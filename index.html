@@ -955,6 +955,9 @@
             color: var(--light);
             font-size: 0.9rem;
         }
+        .op{
+            color: black;
+        }
         .status-select {
             padding: 8px 12px;
             border-radius: 6px;
@@ -1288,6 +1291,7 @@
         let animeListFromApi = [];
         let mangaListFromApi = [];
         let favoritesList = [];
+        let currentListType = 'anime'; // Track current list type
         
         // DOM Elements
         const contentArea = document.getElementById('content-area');
@@ -2757,84 +2761,85 @@
             });
         }
 
-        // Load lists content
-        function loadListsContent() {
-            if (!currentUser) {
-                contentArea.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-user-lock"></i>
-                        <p>Please login to view your lists</p>
-                        <button class="login-btn" id="login-btn-lists" style="margin-top: 20px;">
-                            <i class="fab fa-anilist"></i> Login with AniList
-                        </button>
-                    </div>
-                `;
-                document.getElementById('login-btn-lists').addEventListener('click', loginUser);
-                return;
-            }
+        // Modified loadListsContent function
+function loadListsContent() {
+    if (!currentUser) {
+        contentArea.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-user-lock"></i>
+                <p>Please login to view your lists</p>
+                <button class="login-btn" id="login-btn-lists" style="margin-top: 20px;">
+                    <i class="fab fa-anilist"></i> Login with AniList
+                </button>
+            </div>
+        `;
+        document.getElementById('login-btn-lists').addEventListener('click', loginUser);
+        return;
+    }
 
-            contentArea.innerHTML = `
-                <div class="section-header">
-                    <h2 class="section-title"><i class="fas fa-list"></i> My Lists</h2>
-                </div>
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="anime">Anime List</button>
-                    <button class="tab-btn" data-tab="manga">Manga List</button>
-                </div>
-                <div class="list-filters">
-                    <div class="list-filter-group list-search-container">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="list-search" placeholder="Search...">
-                    </div>
-                    <div class="list-filter-group">
-                        <select id="list-status-filter" class="list-filter-select">
-                            <option value="all">All Statuses</option>
-                            <option value="planning">Planning</option>
-                            <option value="watching" class="anime-only">Watching</option>
-                            <option value="reading" class="manga-only">Reading</option>
-                            <option value="completed">Completed</option>
-                            <option value="paused">Paused</option>
-                            <option value="dropped">Dropped</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="list-content">
-                    <!-- List content will be loaded here -->
-                </div>
-                <div class="pagination" id="list-pagination">
-                    <!-- Pagination will be added here -->
-                </div>
-            `;
-            
-            // Update status filter options based on active tab
-            updateStatusFilterOptions();
-            
-            // Set up list filters
-            document.getElementById('list-search').addEventListener('input', () => {
-                loadListContent();
-            });
-            document.getElementById('list-status-filter').addEventListener('change', () => {
-                loadListContent();
-            });
-            // Tab switching
-document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentPage = 1; // Reset to first page when switching tabs
-        updateStatusFilterOptions();
+    contentArea.innerHTML = `
+        <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-list"></i> My Lists</h2>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn ${currentListType === 'anime' ? 'active' : ''}" data-tab="anime">Anime List</button>
+            <button class="tab-btn ${currentListType === 'manga' ? 'active' : ''}" data-tab="manga">Manga List</button>
+        </div>
+        <div class="list-filters">
+            <div class="list-filter-group list-search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="list-search" placeholder="Search...">
+            </div>
+            <div class="list-filter-group">
+                <select id="list-status-filter" class="list-filter-select">
+                    <option value="all">All Statuses</option>
+                    <option value="planning">Planning</option>
+                    <option value="watching" class="anime-only">Watching</option>
+                    <option value="reading" class="manga-only">Reading</option>
+                    <option value="completed">Completed</option>
+                    <option value="paused">Paused</option>
+                    <option value="dropped">Dropped</option>
+                </select>
+            </div>
+        </div>
+        <div id="list-content">
+            <!-- List content will be loaded here -->
+        </div>
+        <div class="pagination" id="list-pagination">
+            <!-- Pagination will be added here -->
+        </div>
+    `;
+    
+    // Update status filter options based on active tab
+    updateStatusFilterOptions();
+    
+    // Set up list filters
+    document.getElementById('list-search').addEventListener('input', () => {
+        currentPage = 1; // Reset to page 1 when searching
         loadListContent();
-        
-        // Also reset the pagination UI
-        const paginationContainer = document.getElementById('list-pagination');
-        if (paginationContainer) {
-            paginationContainer.innerHTML = '';
-        }
     });
-});
-            // Load initial list content
-            loadListContent();
-        }
+    
+    document.getElementById('list-status-filter').addEventListener('change', () => {
+        currentPage = 1; // Reset to page 1 when changing status filter
+        loadListContent();
+    });
+    
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const newListType = btn.dataset.tab;
+            if (newListType !== currentListType) {
+                currentListType = newListType;
+                currentPage = 1; // Reset to first page when switching list types
+                updateStatusFilterOptions();
+                loadListContent();
+            }
+        });
+    });
+    
+    // Load initial list content
+    loadListContent();
+}
 
         // Update status filter options based on active tab
         function updateStatusFilterOptions() {
@@ -2854,169 +2859,164 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             }
         }
 
-        // Load list content
-        function loadListContent() {
-            const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'anime';
-            const searchTerm = document.getElementById('list-search')?.value.toLowerCase() || '';
-            const statusFilter = document.getElementById('list-status-filter')?.value || 'all';
-
-            // Reset to page 1 if we have a new search term or status filter
-    if (searchTerm !== currentSearchTerm || statusFilter !== currentStatusFilter) {
-        currentPage = 1;
-        currentSearchTerm = searchTerm;
-        currentStatusFilter = statusFilter;
-    }
-            
-            // Use correct list based on tab
-            const listItems = activeTab === 'anime' ? animeList : mangaList;
-            
-            // Apply filters
-            let filteredItems = listItems.filter(item => {
-                const matchesSearch = item.title.toLowerCase().includes(searchTerm);
-                const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-                return matchesSearch && matchesStatus;
-            });
-            
-            // Pagination logic
-            const itemsPerPage = 12;
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const paginatedItems = filteredItems.slice(startIndex, endIndex);
-            totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-            
-            // Render list items
-            const listContent = document.getElementById('list-content');
-            if (listContent) {
-                if (paginatedItems.length === 0) {
-                    listContent.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-list"></i>
-                            <p>No items in your ${activeTab} list</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // Create responsive grid layout
-                listContent.innerHTML = `
-                    <div class="list-grid">
-                        ${paginatedItems.map(item => `
-                            <div class="list-item" data-id="${item.id}">
-                                <div class="list-item-header">
-                                    <img src="${item.image}" alt="${item.title}" class="list-item-img">
-                                    <div class="list-item-info">
-                                        <h3 class="list-item-title">${item.title}</h3>
-                                        <div class="list-item-meta">
-                                            <span class="list-item-type">${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</span>
-                                            <span class="list-item-status">
-                                                <i class="fas fa-${item.type === 'anime' ? 'tv' : 'book'}"></i>
-                                                ${getStatusText(item.status)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="list-item-progress">
-                                    <div class="progress-label">
-                                        <span>Progress</span>
-                                        <span>${item.progress}/${item.maxProgress || '?'}</span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: ${(item.progress / (item.maxProgress || 1)) * 100}%"></div>
-                                    </div>
-                                </div>
-                                <div class="list-item-actions">
-                                    <div class="action-group">
-                                        <input type="number" class="progress-input" min="0" max="${item.maxProgress}" value="${item.progress}" 
-                                               onchange="updateProgress(${item.id}, '${activeTab}', this)" placeholder="Progress">
-                                        <input type="number" class="score-input" min="0" max="10" step="0.1" value="${item.score}" 
-                                               onchange="updateScore(${item.id}, '${activeTab}', this)" placeholder="Score">
-                                    </div>
-                                    <div class="action-group">
-                                        <select class="status-select" onchange="updateStatus(${item.id}, '${activeTab}', this.value)">
-                                            <option value="planning" ${item.status === 'planning' ? 'selected' : ''}>Planning</option>
-                                            ${activeTab === 'anime' ? 
-                                                `<option value="watching" ${item.status === 'watching' ? 'selected' : ''}>Watching</option>` : 
-                                                `<option value="reading" ${item.status === 'reading' ? 'selected' : ''}>Reading</option>`
-                                            }
-                                            <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>Completed</option>
-                                            <option value="paused" ${item.status === 'paused' ? 'selected' : ''}>Paused</option>
-                                            <option value="dropped" ${item.status === 'dropped' ? 'selected' : ''}>Dropped</option>
-                                        </select>
-                                        <button class="list-item-btn" onclick="removeFromList(${item.id}, '${activeTab}')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+        // Modified loadListContent function
+function loadListContent() {
+    const searchTerm = document.getElementById('list-search')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('list-status-filter')?.value || 'all';
+    
+    // Use correct list based on currentListType
+    const listItems = currentListType === 'anime' ? animeList : mangaList;
+    
+    // Apply filters
+    let filteredItems = listItems.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(searchTerm);
+        const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+    
+    // Pagination logic
+    const itemsPerPage = 12;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedItems = filteredItems.slice(startIndex, endIndex);
+    totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+    
+    // Render list items
+    const listContent = document.getElementById('list-content');
+    if (listContent) {
+        if (paginatedItems.length === 0) {
+            listContent.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-list"></i>
+                    <p>No items in your ${currentListType} list</p>
+                </div>
+            `;
+        } else {
+            // Create responsive grid layout
+            listContent.innerHTML = `
+                <div class="list-grid">
+                    ${paginatedItems.map(item => `
+                        <div class="list-item" data-id="${item.id}">
+                            <div class="list-item-header">
+                                <img src="${item.image}" alt="${item.title}" class="list-item-img">
+                                <div class="list-item-info">
+                                    <h3 class="list-item-title">${item.title}</h3>
+                                    <div class="list-item-meta">
+                                        <span class="list-item-type">${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</span>
+                                        <span class="list-item-status">
+                                            <i class="fas fa-${item.type === 'anime' ? 'tv' : 'book'}"></i>
+                                            ${getStatusText(item.status)}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-            
-            // Render pagination
-            renderListPagination();
+                            <div class="list-item-progress">
+                                <div class="progress-label">
+                                    <span>Progress</span>
+                                    <span>${item.progress}/${item.maxProgress || '?'}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${(item.progress / (item.maxProgress || 1)) * 100}%"></div>
+                                </div>
+                            </div>
+                            <div class="list-item-actions">
+                                <div class="action-group">
+                                    <input type="number" class="progress-input" min="0" max="${item.maxProgress}" value="${item.progress}" 
+                                           onchange="updateProgress(${item.id}, '${currentListType}', this)" placeholder="Progress">
+                                    <input type="number" class="score-input" min="0" max="10" step="0.1" value="${item.score}" 
+                                           onchange="updateScore(${item.id}, '${currentListType}', this)" placeholder="Score">
+                                </div>
+                                <div class="action-group">
+                                    <select class="status-select" onchange="updateStatus(${item.id}, '${currentListType}', this.value)">
+                                        <option value="planning" ${item.status === 'planning' ? 'selected' : ''}>Planning</option>
+                                        ${currentListType === 'anime' ? 
+                                            `<option value="watching" ${item.status === 'watching' ? 'selected' : ''}>Watching</option>` : 
+                                            `<option value="reading" ${item.status === 'reading' ? 'selected' : ''}>Reading</option>`
+                                        }
+                                        <option value="completed" ${item.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                        <option value="paused" ${item.status === 'paused' ? 'selected' : ''}>Paused</option>
+                                        <option value="dropped" ${item.status === 'dropped' ? 'selected' : ''}>Dropped</option>
+                                    </select>
+                                    <button class="list-item-btn" onclick="removeFromList(${item.id}, '${currentListType}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
+    }
+    
+    // Always render pagination (even if empty)
+    renderListPagination();
+}
 
-        // Render list pagination
-        function renderListPagination() {
-            const paginationContainer = document.getElementById('list-pagination');
-            if (!paginationContainer) return;
-            
-            if (totalPages <= 1) {
-                paginationContainer.innerHTML = '';
-                return;
-            }
-            
-            let paginationHTML = '';
-            
-            // First page button
-            paginationHTML += `
-                <button class="page-btn ${currentPage === 1 ? 'active' : ''}" 
-                        onclick="changeListPage(1)" ${currentPage === 1 ? 'disabled' : ''}>
-                    First
-                </button>
-            `;
-            
-            // Previous button
-            if (currentPage > 1) {
-                paginationHTML += `
-                    <button class="page-btn" onclick="changeListPage(${currentPage - 1})">
-                        <i class="fas fa-chevron-left"></i> Prev
-                    </button>
-                `;
-            }
-            
-            // Page numbers (limited to show nearby pages)
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
-            for (let i = startPage; i <= endPage; i++) {
-                paginationHTML += `
-                    <button class="page-btn ${i === currentPage ? 'active' : ''}" 
-                            onclick="changeListPage(${i})">
-                        ${i}
-                    </button>
-                `;
-            }
-            
-            // Next button
-            if (currentPage < totalPages) {
-                paginationHTML += `
-                    <button class="page-btn" onclick="changeListPage(${currentPage + 1})">
-                        Next <i class="fas fa-chevron-right"></i>
-                    </button>
-                `;
-            }
-            
-            // Last page button
-            paginationHTML += `
-                <button class="page-btn ${currentPage === totalPages ? 'active' : ''}" 
-                        onclick="changeListPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>
-                    Last
-                </button>
-            `;
-            
-            paginationContainer.innerHTML = paginationHTML;
-        }
+// Modified renderListPagination function
+function renderListPagination() {
+    const paginationContainer = document.getElementById('list-pagination');
+    if (!paginationContainer) return;
+    
+    if (totalPages <= 1) {
+        // Show minimal pagination when only 1 page
+        paginationContainer.innerHTML = `
+            <button class="page-btn active">1</button>
+        `;
+        return;
+    }
+    
+    let paginationHTML = '';
+    
+    // First page button
+    paginationHTML += `
+        <button class="page-btn ${currentPage === 1 ? 'active' : ''}" 
+                onclick="changeListPage(1)" ${currentPage === 1 ? 'disabled' : ''}>
+            First
+        </button>
+    `;
+    
+    // Previous button
+    if (currentPage > 1) {
+        paginationHTML += `
+            <button class="page-btn" onclick="changeListPage(${currentPage - 1})">
+                <i class="fas fa-chevron-left"></i> Prev
+            </button>
+        `;
+    }
+    
+    // Page numbers (limited to show nearby pages)
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <button class="page-btn ${i === currentPage ? 'active' : ''}" 
+                    onclick="changeListPage(${i})">
+                ${i}
+            </button>
+        `;
+    }
+    
+    // Next button
+    if (currentPage < totalPages) {
+        paginationHTML += `
+            <button class="page-btn" onclick="changeListPage(${currentPage + 1})">
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+    }
+    
+    // Last page button
+    paginationHTML += `
+        <button class="page-btn ${currentPage === totalPages ? 'active' : ''}" 
+                onclick="changeListPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>
+            Last
+        </button>
+    `;
+    
+    paginationContainer.innerHTML = paginationHTML;
+}
 
         // Change list page
         function changeListPage(page) {

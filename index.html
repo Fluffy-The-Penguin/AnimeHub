@@ -971,12 +971,11 @@
     background-repeat: no-repeat;
     background-position: right 8px center;
     background-size: 12px;
-    /* Add these new properties */
-    padding-right: 25px; /* Make room for dropdown arrow */
-    text-overflow: ellipsis; /* Handle long text gracefully */
-    white-space: nowrap; /* Prevent text wrapping */
-    overflow: hidden; /* Hide overflow */
-    min-width: 120px; /* Ensure minimum width */
+    padding-right: 25px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    min-width: 120px;
 }
 .status-select option {
     background: var(--darker);
@@ -994,7 +993,7 @@
     background: var(--darker) !important;
     color: var(--light) !important;
     padding: 8px;
-    white-space: normal; /* Allow text to wrap in dropdown */
+    white-space: normal;
 }
 .profile-button {
     background: none;
@@ -1240,23 +1239,8 @@
                 </div>
                 <div class="sidebar-card">
                     <h3 class="sidebar-title"><i class="fas fa-chart-line"></i> Stats</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="anime-count">0</div>
-                            <div class="stat-label">Anime</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="manga-count">0</div>
-                            <div class="stat-label">Manga</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="user-count">0</div>
-                            <div class="stat-label">Users</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="review-count">0</div>
-                            <div class="stat-label">Reviews</div>
-                        </div>
+                    <div class="stats-grid" id="stats-container">
+                        <!-- Stats will be loaded dynamically -->
                     </div>
                 </div>
                 <div class="sidebar-card">
@@ -1306,10 +1290,6 @@
         const closeModal = document.querySelector('.close-modal');
         const notification = document.getElementById('notification');
         const genreTagsContainer = document.getElementById('genre-tags');
-        const animeCount = document.getElementById('anime-count');
-        const mangaCount = document.getElementById('manga-count');
-        const userCount = document.getElementById('user-count');
-        const reviewCount = document.getElementById('review-count');
         const favoritesDisplay = document.getElementById('favorites-display');
         const profileBtn = document.getElementById('profile-btn');
         const dropdownContent = document.getElementById('dropdown-content');
@@ -1319,12 +1299,12 @@
         const userSince = document.getElementById('user-since');
         const sidebar = document.getElementById('sidebar');
         const sidebarFilters = document.getElementById('sidebar-filters');
+        const statsContainer = document.getElementById('stats-container');
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', () => {
             // Load initial data
             loadGenres();
-            loadStats();
             loadFavoritesDisplay();
             // Set up event listeners
             setupEventListeners();
@@ -1336,6 +1316,8 @@
             checkLoginStatus();
             // Hide filters for home, favorites and lists
             updateSidebarFilters();
+            // Load stats for current page
+            updateStats();
         });
 
         // Update sidebar filters visibility based on current tab
@@ -1344,6 +1326,156 @@
                 sidebarFilters.style.display = 'block';
             } else {
                 sidebarFilters.style.display = 'none';
+            }
+        }
+
+        // Update stats based on current page
+        function updateStats() {
+            switch(currentTab) {
+                case 'home':
+                    statsContainer.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value" id="anime-count">0</div>
+                            <div class="stat-label">Total Anime</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="manga-count">0</div>
+                            <div class="stat-label">Total Manga</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="user-count">0</div>
+                            <div class="stat-label">Active Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="review-count">0</div>
+                            <div class="stat-label">Reviews</div>
+                        </div>
+                    `;
+                    loadStats();
+                    break;
+                case 'anime':
+                    statsContainer.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value" id="anime-count">0</div>
+                            <div class="stat-label">Anime Titles</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="episode-count">0</div>
+                            <div class="stat-label">Total Episodes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avg-score">0</div>
+                            <div class="stat-label">Avg Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="popularity">0</div>
+                            <div class="stat-label">Popularity</div>
+                        </div>
+                    `;
+                    loadAnimeStats();
+                    break;
+                case 'manga':
+                    statsContainer.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value" id="manga-count">0</div>
+                            <div class="stat-label">Manga Titles</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="chapter-count">0</div>
+                            <div class="stat-label">Total Chapters</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avg-score">0</div>
+                            <div class="stat-label">Avg Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="popularity">0</div>
+                            <div class="stat-label">Popularity</div>
+                        </div>
+                    `;
+                    loadMangaStats();
+                    break;
+                case 'seasonal':
+                    statsContainer.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value" id="season-count">0</div>
+                            <div class="stat-label">Seasonal Anime</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="trending-count">0</div>
+                            <div class="stat-label">Trending</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avg-score">0</div>
+                            <div class="stat-label">Avg Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="popular-count">0</div>
+                            <div class="stat-label">Popular</div>
+                        </div>
+                    `;
+                    loadSeasonalStats();
+                    break;
+                case 'favorites':
+                    statsContainer.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value" id="favorites-count">${favoritesList.length}</div>
+                            <div class="stat-label">Favorites</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="anime-favs">${favoritesList.filter(f => f.type === 'anime').length}</div>
+                            <div class="stat-label">Anime</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="manga-favs">${favoritesList.filter(f => f.type === 'manga').length}</div>
+                            <div class="stat-label">Manga</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avg-score">0</div>
+                            <div class="stat-label">Avg Score</div>
+                        </div>
+                    `;
+                    break;
+                case 'lists':
+                    statsContainer.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value" id="anime-count">${animeList.length}</div>
+                            <div class="stat-label">Anime</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="manga-count">${mangaList.length}</div>
+                            <div class="stat-label">Manga</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="completed-count">${[...animeList, ...mangaList].filter(i => i.status === 'completed').length}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="progress-count">${[...animeList, ...mangaList].filter(i => i.status === 'watching' || i.status === 'reading').length}</div>
+                            <div class="stat-label">In Progress</div>
+                        </div>
+                    `;
+                    break;
+                default:
+                    statsContainer.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value" id="anime-count">0</div>
+                            <div class="stat-label">Anime</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="manga-count">0</div>
+                            <div class="stat-label">Manga</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="user-count">0</div>
+                            <div class="stat-label">Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="review-count">0</div>
+                            <div class="stat-label">Reviews</div>
+                        </div>
+                    `;
+                    loadStats();
             }
         }
 
@@ -1358,6 +1490,7 @@
                     currentTab = tab.dataset.tab;
                     currentPage = 1; // Reset to first page when switching tabs
                     updateSidebarFilters();
+                    updateStats();
                     loadContent();
                 });
             });
@@ -1410,6 +1543,7 @@
                             currentTab = tab;
                             currentPage = 1;
                             updateSidebarFilters();
+                            updateStats();
                             loadContent();
                             dropdownContent.classList.remove('show');
                         }
@@ -1737,6 +1871,7 @@
                 loadProfileStats();
                 loadFavoritesDisplay();
                 loadListContent();
+                updateStats();
             } catch (error) {
                 console.error('Error fetching user lists:', error);
                 showNotification('Failed to load user lists');
@@ -1874,18 +2009,193 @@ function updateUserUI(isLoggedIn) {
                 const data = await response.json();
                 // Defensive checks
                 if (data.data) {
-                    animeCount.textContent = data.data.anime?.pageInfo?.total?.toLocaleString() || '0';
-                    mangaCount.textContent = data.data.manga?.pageInfo?.total?.toLocaleString() || '0';
-                    userCount.textContent = data.data.user?.pageInfo?.total?.toLocaleString() || '0';
-                    reviewCount.textContent = data.data.review?.pageInfo?.total?.toLocaleString() || '0';
+                    document.getElementById('anime-count').textContent = data.data.anime?.pageInfo?.total?.toLocaleString() || '0';
+                    document.getElementById('manga-count').textContent = data.data.manga?.pageInfo?.total?.toLocaleString() || '0';
+                    document.getElementById('user-count').textContent = data.data.user?.pageInfo?.total?.toLocaleString() || '0';
+                    document.getElementById('review-count').textContent = data.data.review?.pageInfo?.total?.toLocaleString() || '0';
                 }
             } catch (error) {
                 console.error('Error loading stats:', error);
                 // Set default values
-                animeCount.textContent = '0';
-                mangaCount.textContent = '0';
-                userCount.textContent = '0';
-                reviewCount.textContent = '0';
+                document.getElementById('anime-count').textContent = '0';
+                document.getElementById('manga-count').textContent = '0';
+                document.getElementById('user-count').textContent = '0';
+                document.getElementById('review-count').textContent = '0';
+            }
+        }
+
+        // Load anime statistics
+        async function loadAnimeStats() {
+            try {
+                const response = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query {
+                                anime: Page(page: 1, perPage: 1) {
+                                    pageInfo {
+                                        total
+                                    }
+                                    media(type: ANIME) {
+                                        averageScore
+                                        popularity
+                                        episodes
+                                    }
+                                }
+                            }
+                        `
+                    })
+                });
+                const data = await response.json();
+                if (data.data && data.data.anime) {
+                    const animeCount = data.data.anime.pageInfo?.total || 0;
+                    const animeList = data.data.anime.media || [];
+                    
+                    let totalEpisodes = 0;
+                    let totalScore = 0;
+                    let totalPopularity = 0;
+                    let count = 0;
+                    
+                    animeList.forEach(anime => {
+                        if (anime.episodes) totalEpisodes += anime.episodes;
+                        if (anime.averageScore) totalScore += anime.averageScore;
+                        if (anime.popularity) totalPopularity += anime.popularity;
+                        count++;
+                    });
+                    
+                    const avgScore = count > 0 ? (totalScore / count / 10).toFixed(1) : 0;
+                    const avgPopularity = count > 0 ? (totalPopularity / count).toFixed(0) : 0;
+                    
+                    document.getElementById('anime-count').textContent = animeCount.toLocaleString();
+                    document.getElementById('episode-count').textContent = totalEpisodes.toLocaleString();
+                    document.getElementById('avg-score').textContent = avgScore;
+                    document.getElementById('popularity').textContent = avgPopularity;
+                }
+            } catch (error) {
+                console.error('Error loading anime stats:', error);
+            }
+        }
+
+        // Load manga statistics
+        async function loadMangaStats() {
+            try {
+                const response = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query {
+                                manga: Page(page: 1, perPage: 1) {
+                                    pageInfo {
+                                        total
+                                    }
+                                    media(type: MANGA) {
+                                        averageScore
+                                        popularity
+                                        chapters
+                                    }
+                                }
+                            }
+                        `
+                    })
+                });
+                const data = await response.json();
+                if (data.data && data.data.manga) {
+                    const mangaCount = data.data.manga.pageInfo?.total || 0;
+                    const mangaList = data.data.manga.media || [];
+                    
+                    let totalChapters = 0;
+                    let totalScore = 0;
+                    let totalPopularity = 0;
+                    let count = 0;
+                    
+                    mangaList.forEach(manga => {
+                        if (manga.chapters) totalChapters += manga.chapters;
+                        if (manga.averageScore) totalScore += manga.averageScore;
+                        if (manga.popularity) totalPopularity += manga.popularity;
+                        count++;
+                    });
+                    
+                    const avgScore = count > 0 ? (totalScore / count / 10).toFixed(1) : 0;
+                    const avgPopularity = count > 0 ? (totalPopularity / count).toFixed(0) : 0;
+                    
+                    document.getElementById('manga-count').textContent = mangaCount.toLocaleString();
+                    document.getElementById('chapter-count').textContent = totalChapters.toLocaleString();
+                    document.getElementById('avg-score').textContent = avgScore;
+                    document.getElementById('popularity').textContent = avgPopularity;
+                }
+            } catch (error) {
+                console.error('Error loading manga stats:', error);
+            }
+        }
+
+        // Load seasonal statistics
+        async function loadSeasonalStats() {
+            try {
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const season = getCurrentSeason(currentMonth);
+                const year = now.getFullYear();
+                
+                const response = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query ($season: MediaSeason, $seasonYear: Int) {
+                                Page(page: 1, perPage: 1) {
+                                    media(season: $season, seasonYear: $seasonYear, type: ANIME) {
+                                        id
+                                        averageScore
+                                        popularity
+                                        trending
+                                    }
+                                }
+                            }
+                        `,
+                        variables: {
+                            season: season,
+                            seasonYear: year
+                        }
+                    })
+                });
+                const data = await response.json();
+                if (data.data && data.data.Page) {
+                    const mediaList = data.data.Page.media || [];
+                    
+                    let totalScore = 0;
+                    let totalPopularity = 0;
+                    let totalTrending = 0;
+                    let count = 0;
+                    
+                    mediaList.forEach(media => {
+                        if (media.averageScore) totalScore += media.averageScore;
+                        if (media.popularity) totalPopularity += media.popularity;
+                        if (media.trending) totalTrending += media.trending;
+                        count++;
+                    });
+                    
+                    const avgScore = count > 0 ? (totalScore / count / 10).toFixed(1) : 0;
+                    const avgPopularity = count > 0 ? (totalPopularity / count).toFixed(0) : 0;
+                    const avgTrending = count > 0 ? (totalTrending / count).toFixed(0) : 0;
+                    
+                    document.getElementById('season-count').textContent = count.toLocaleString();
+                    document.getElementById('trending-count').textContent = avgTrending;
+                    document.getElementById('avg-score').textContent = avgScore;
+                    document.getElementById('popular-count').textContent = avgPopularity;
+                }
+            } catch (error) {
+                console.error('Error loading seasonal stats:', error);
             }
         }
 
@@ -2825,9 +3135,17 @@ function updateUserUI(isLoggedIn) {
             if (activeTab === 'anime') {
                 watchingOption.style.display = 'block';
                 readingOption.style.display = 'none';
+                // Set default value if current selection is reading
+                if (statusFilter.value === 'reading') {
+                    statusFilter.value = 'watching';
+                }
             } else {
                 watchingOption.style.display = 'none';
                 readingOption.style.display = 'block';
+                // Set default value if current selection is watching
+                if (statusFilter.value === 'watching') {
+                    statusFilter.value = 'reading';
+                }
             }
         }
 
@@ -3158,6 +3476,7 @@ async function updateStatus(id, type, newStatus) {
             
             // Refresh the list display
             loadListContent();
+            updateStats();
         }
     } catch (error) {
         console.error('Error updating status:', error);
@@ -3199,6 +3518,7 @@ async function updateStatus(id, type, newStatus) {
                             mangaList = mangaList.filter(item => item.id !== id);
                         }
                         loadListContent();
+                        updateStats();
                         showNotification(`${type === 'anime' ? 'Anime' : 'Manga'} removed from list`);
                     }
                 } catch (error) {
@@ -3663,6 +3983,7 @@ function renderPagination(pageInfo, type) {
             
             // Update profile stats
             loadProfileStats();
+            updateStats();
         }
 
         // Toggle manga list
@@ -3773,6 +4094,7 @@ function renderPagination(pageInfo, type) {
             
             // Update profile stats
             loadProfileStats();
+            updateStats();
         }
 
         // Toggle favorite
@@ -3895,6 +4217,7 @@ function renderPagination(pageInfo, type) {
             // Update favorites display
             loadFavoritesDisplay();
             loadProfileStats();
+            updateStats();
         }
 
         // Show notification
@@ -3927,6 +4250,7 @@ function renderPagination(pageInfo, type) {
                         currentTab = tab;
                         currentPage = 1;
                         updateSidebarFilters();
+                        updateStats();
                         loadContent();
                     }
                 }

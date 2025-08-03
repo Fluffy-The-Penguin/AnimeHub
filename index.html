@@ -2233,8 +2233,8 @@ function updateUserUI(isLoggedIn) {
         function getStatusText(status) {
             const statusMap = {
                 'planning': 'Planning',
-                'watching': 'Current',
-                'reading': 'Current',
+                'watching': 'Watching',
+                'reading': 'Reading',
                 'completed': 'Completed',
                 'paused': 'Paused',
                 'dropped': 'Dropped'
@@ -3123,46 +3123,56 @@ function updateUserUI(isLoggedIn) {
             loadListContent();
         }
 
-        // Update status filter options based on active tab
         function updateStatusFilterOptions() {
-            const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'anime';
-            const statusFilter = document.getElementById('list-status-filter');
-            
-            // Show/hide appropriate options
-            const watchingOption = statusFilter.querySelector('.anime-only');
-            const readingOption = statusFilter.querySelector('.manga-only');
-            
-            if (activeTab === 'anime') {
-                watchingOption.style.display = 'block';
-                readingOption.style.display = 'none';
-                // Set default value if current selection is reading
-                if (statusFilter.value === 'reading') {
-                    statusFilter.value = 'watching';
-                }
-            } else {
-                watchingOption.style.display = 'none';
-                readingOption.style.display = 'block';
-                // Set default value if current selection is watching
-                if (statusFilter.value === 'watching') {
-                    statusFilter.value = 'reading';
-                }
-            }
+    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'anime';
+    const statusFilter = document.getElementById('list-status-filter');
+    
+    const watchingOption = statusFilter.querySelector('.anime-only');
+    const readingOption = statusFilter.querySelector('.manga-only');
+    
+    if (activeTab === 'anime') {
+        watchingOption.style.display = 'block';
+        readingOption.style.display = 'none';
+        // Set default value if current selection is reading
+        if (statusFilter.value === 'reading') {
+            statusFilter.value = 'watching';
         }
+    } else {
+        watchingOption.style.display = 'none';
+        readingOption.style.display = 'block';
+        // Set default value if current selection is watching
+        if (statusFilter.value === 'watching') {
+            statusFilter.value = 'reading';
+        }
+    }
+}
 
         // Load list content
         function loadListContent() {
             const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'anime';
-            const searchTerm = document.getElementById('list-search')?.value.toLowerCase() || '';
-            const statusFilter = document.getElementById('list-status-filter')?.value || 'all';
-            
-            // Use correct list based on tab
-            const listItems = activeTab === 'anime' ? animeList : mangaList;
-            
-            // Apply filters
-            let filteredItems = listItems.filter(item => {
-                const matchesSearch = item.title.toLowerCase().includes(searchTerm);
-                const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-                return matchesSearch && matchesStatus;
+    const searchTerm = document.getElementById('list-search')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('list-status-filter')?.value || 'all';
+    
+    // Use correct list based on tab
+    const listItems = activeTab === 'anime' ? animeList : mangaList;
+    
+    // Apply filters
+    let filteredItems = listItems.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(searchTerm);
+        
+        // Handle special case for watching/reading filters
+        if (statusFilter === 'watching' || statusFilter === 'reading') {
+            // For watching filter, only show anime items with status 'watching'
+            // For reading filter, only show manga items with status 'reading'
+            const matchesStatus = activeTab === 'anime' ? 
+                item.status === 'watching' : 
+                item.status === 'reading';
+            return matchesSearch && matchesStatus;
+        }
+        
+        // For other statuses, check directly
+        const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+        return matchesSearch && matchesStatus;
             });
             
             // Pagination logic
@@ -3429,8 +3439,8 @@ async function updateStatus(id, type, newStatus) {
         // First convert the status to AniList's format
         const statusMap = {
             'planning': 'PLANNING',
-            'watching': 'watching',
-            'reading': 'reading',
+            'watching': 'CURRENT',
+            'reading': 'CURRENT',
             'completed': 'COMPLETED',
             'paused': 'PAUSED',
             'dropped': 'DROPPED'

@@ -1407,18 +1407,17 @@
             });
         }
 
-        // Check login status function (with profile picture fix)
-function checkLoginStatus() {
-    const token = localStorage.getItem('anilist_token');
-    if (token) {
-        // User is logged in
-        fetchUserData(token);
-    } else {
-        // User is not logged in
-        updateUserUI(false);
-    }
-}
-
+        // Check login status
+        function checkLoginStatus() {
+            const token = localStorage.getItem('anilist_token');
+            if (token) {
+                // User is logged in
+                fetchUserData(token);
+            } else {
+                // User is not logged in
+                updateUserUI(false);
+            }
+        }
 
         // Login user function
         function loginUser() {
@@ -1469,83 +1468,72 @@ function checkLoginStatus() {
         }
 
         // Fetch user data including lists
-        // Fetch user data including lists and avatar
-async function fetchUserData(token) {
-    try {
-        // First get the user ID and basic profile info (including avatar)
-        const viewerResponse = await fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                query: `
-                    query {
-                        Viewer {
-                            id
-                            name
-                            avatar {
-                                large
-                                medium
+        async function fetchUserData(token) {
+            try {
+                // First get the user ID
+                const viewerResponse = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            query {
+                                Viewer {
+                                    id
+                                    name
+                                    avatar {
+                                        large
+                                    }
+                                    bannerImage
+                                    about
+                                    statistics {
+                                        anime {
+                                            count
+                                            episodesWatched
+                                            meanScore
+                                        }
+                                        manga {
+                                            count
+                                            chaptersRead
+                                            meanScore
+                                        }
+                                    }
+                                    mediaListOptions {
+                                        scoreFormat
+                                        animeList {
+                                            sectionOrder
+                                        }
+                                        mangaList {
+                                            sectionOrder
+                                        }
+                                    }
+                                }
                             }
-                            bannerImage
-                            about
-                            statistics {
-                                anime {
-                                    count
-                                    episodesWatched
-                                    meanScore
-                                }
-                                manga {
-                                    count
-                                    chaptersRead
-                                    meanScore
-                                }
-                            }
-                            mediaListOptions {
-                                scoreFormat
-                                animeList {
-                                    sectionOrder
-                                }
-                                mangaList {
-                                    sectionOrder
-                                }
-                            }
-                        }
-                    }
-                `
-            })
-        });
-
-        const viewerData = await viewerResponse.json();
-
-        if (viewerData.errors || !viewerData.data?.Viewer) {
-            console.error('Failed to fetch user data:', viewerData.errors);
-            showNotification('Failed to fetch user data');
-            return false;
+                        `
+                    })
+                });
+                const viewerData = await viewerResponse.json();
+                if (viewerData.errors || !viewerData.data?.Viewer) {
+                    console.error('Failed to fetch user data:', viewerData.errors);
+                    showNotification('Failed to fetch user data');
+                    return false;
+                }
+                currentUser = viewerData.data.Viewer;
+                updateUserUI(true);
+                showNotification('Successfully logged in!');
+                
+                // Fetch lists from API
+                await fetchUserLists(token);
+                
+                return true;
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                showNotification('Network error fetching user data');
+                return false;
+            }
         }
-
-        // Extract the user data
-        currentUser = viewerData.data.Viewer;
-
-        // Update the UI with the fetched data (this will now include the avatar)
-        updateUserUI(true);
-
-        // Show success message
-        showNotification('Successfully logged in!');
-
-        // Now fetch the user's actual lists (anime and manga)
-        await fetchUserLists(token);
-
-        return true;
-
-    } catch (error) {
-        console.error('Error fetching user data:', error);
-        showNotification('Network error fetching user data');
-        return false;
-    }
-}
 
         // Fetch user lists from API
         async function fetchUserLists(token) {
@@ -1733,49 +1721,32 @@ async function fetchUserData(token) {
 
         // Update UI based on login status
         function updateUserUI(isLoggedIn) {
-    if (isLoggedIn && currentUser) {
-        // Update with available fields
-        userName.textContent = currentUser.name;
-        userSince.textContent = `Member since ${new Date().getFullYear()}`;
-
-        // Update profile picture if available
-        if (currentUser.avatar) {
-            const profileAvatar = document.getElementById('profile-avatar');
-            if (profileAvatar) {
-                // Use 'large' for a larger image, or 'medium' for smaller
-                profileAvatar.src = currentUser.avatar.large;
-                // Optional: Add a fallback image if the avatar URL fails
-                profileAvatar.onerror = function() {
-                    this.src = 'https://via.placeholder.com/100'; // Default placeholder
-                };
+            if (isLoggedIn && currentUser) {
+                // Update with available fields
+                userName.textContent = currentUser.name;
+                userSince.textContent = `Member since ${new Date().getFullYear()}`;
+                // Update avatar if available
+                if (currentUser.avatar) {
+                    // Update profile picture in UI
+                }
+                // Update stats
+                if (currentUser.statistics) {
+                    document.getElementById('profile-anime-count').textContent = 
+                        currentUser.statistics.anime?.count || 0;
+                    document.getElementById('profile-manga-count').textContent = 
+                        currentUser.statistics.manga?.count || 0;
+                }
+                // Show/hide appropriate buttons
+                logoutBtn.style.display = 'block';
+                loginBtn.style.display = 'none';
+            } else {
+                // Guest user state
+                userName.textContent = 'Guest User';
+                userSince.textContent = 'Not logged in';
+                logoutBtn.style.display = 'none';
+                loginBtn.style.display = 'block';
             }
         }
-
-        // Update stats if available
-        if (currentUser.statistics) {
-            document.getElementById('profile-anime-count').textContent = currentUser.statistics.anime?.count || 0;
-            document.getElementById('profile-manga-count').textContent = currentUser.statistics.manga?.count || 0;
-        }
-
-        // Show/hide appropriate buttons
-        logoutBtn.style.display = 'block';
-        loginBtn.style.display = 'none';
-    } else {
-        // Guest user state
-        userName.textContent = 'Guest User';
-        userSince.textContent = 'Not logged in';
-        
-        // Hide profile picture when guest
-        const profileAvatar = document.getElementById('profile-avatar');
-        if (profileAvatar) {
-            profileAvatar.src = 'https://via.placeholder.com/100'; // Default placeholder for guests
-        }
-
-        // Show login button
-        loginBtn.style.display = 'block';
-        logoutBtn.style.display = 'none';
-    }
-}
 
         // Logout user
         function logoutUser() {

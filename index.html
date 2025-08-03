@@ -1739,15 +1739,15 @@
                 if (animeData.data?.animeList) {
                     animeListFromApi = animeData.data.animeList.lists.flatMap(list => list.entries);
                     animeList = animeListFromApi.map(entry => ({
-                        id: entry.media.id,
-                        title: entry.media.title.english || entry.media.title.romaji || 'Untitled',
-                        image: entry.media.coverImage.large,
-                        type: 'anime',
-                        status: entry.status.toLowerCase(),
-                        score: entry.score,
-                        progress: entry.progress,
-                        maxProgress: entry.media.episodes || 0
-                    }));
+    id: entry.media.id,
+    title: entry.media.title.english || entry.media.title.romaji || 'Untitled',
+    image: entry.media.coverImage.large,
+    type: 'anime',
+    status: entry.status === 'CURRENT' ? 'watching' : entry.status.toLowerCase(),
+    score: entry.score,
+    progress: entry.progress,
+    maxProgress: entry.media.episodes || 0
+}));
                 }
                 
                 // Fetch manga list
@@ -1793,15 +1793,15 @@
                 if (mangaData.data?.mangaList) {
                     mangaListFromApi = mangaData.data.mangaList.lists.flatMap(list => list.entries);
                     mangaList = mangaListFromApi.map(entry => ({
-                        id: entry.media.id,
-                        title: entry.media.title.english || entry.media.title.romaji || 'Untitled',
-                        image: entry.media.coverImage.large,
-                        type: 'manga',
-                        status: entry.status.toLowerCase(),
-                        score: entry.score,
-                        progress: entry.progress,
-                        maxProgress: entry.media.chapters || 0
-                    }));
+    id: entry.media.id,
+    title: entry.media.title.english || entry.media.title.romaji || 'Untitled',
+    image: entry.media.coverImage.large,
+    type: 'manga',
+    status: entry.status === 'CURRENT' ? 'reading' : entry.status.toLowerCase(),
+    score: entry.score,
+    progress: entry.progress,
+    maxProgress: entry.media.chapters || 0
+}));
                 }
                 
                 // Fetch favorites

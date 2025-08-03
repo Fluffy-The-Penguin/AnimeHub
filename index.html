@@ -3133,14 +3133,14 @@ function updateUserUI(isLoggedIn) {
     if (activeTab === 'anime') {
         watchingOption.style.display = 'block';
         readingOption.style.display = 'none';
-        // Only change value if it's not already valid for this tab
+        // Reset to default value if current selection is invalid for this tab
         if (statusFilter.value === 'reading') {
             statusFilter.value = 'watching';
         }
     } else {
         watchingOption.style.display = 'none';
         readingOption.style.display = 'block';
-        // Only change value if it's not already valid for this tab
+        // Reset to default value if current selection is invalid for this tab
         if (statusFilter.value === 'watching') {
             statusFilter.value = 'reading';
         }
@@ -3160,20 +3160,19 @@ function updateUserUI(isLoggedIn) {
     let filteredItems = listItems.filter(item => {
         const matchesSearch = item.title.toLowerCase().includes(searchTerm);
         
-        // Special handling for Watching/Reading filters
+        // Handle special case for Watching/Reading filters
         if (statusFilter === 'watching' || statusFilter === 'reading') {
             // If we're on anime tab and filtering by watching, only show items with status 'watching'
             // If we're on manga tab and filtering by reading, only show items with status 'reading'
-            if (activeTab === 'anime' && statusFilter === 'watching') {
-                return matchesSearch && item.status === 'watching';
-            } else if (activeTab === 'manga' && statusFilter === 'reading') {
-                return matchesSearch && item.status === 'reading';
+            if ((activeTab === 'anime' && statusFilter === 'watching') || 
+                (activeTab === 'manga' && statusFilter === 'reading')) {
+                return matchesSearch && item.status === statusFilter;
             } else {
-                return false; // Don't show anything if filter doesn't match tab
+                return false; // Don't show anything if filter doesn't match current tab
             }
         }
         
-        // Normal filtering
+        // For other status filters or 'all'
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
         return matchesSearch && matchesStatus;
     });

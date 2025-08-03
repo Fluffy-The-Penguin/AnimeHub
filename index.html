@@ -3887,227 +3887,227 @@ function renderPagination(pageInfo, type) {
             }
         }
 
-        // Toggle anime list
         async function toggleAnimeList(media) {
-            if (!currentUser) {
-                showNotification('Please login to manage your anime list');
-                return;
-            }
-            
-            const existingIndex = animeList.findIndex(item => item.id === media.id);
-            if (existingIndex > -1) {
-                // Remove from anime list
-                try {
-                    const response = await fetch('https://graphql.anilist.co', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
-                        },
-                        body: JSON.stringify({
-                            query: `
-                                mutation ($mediaId: Int) {
-                                    DeleteMediaListEntry(mediaId: $mediaId, type: ANIME) {
-                                        deleted
-                                    }
-                                }
-                            `,
-                            variables: {
-                                mediaId: media.id
+    if (!currentUser) {
+        showNotification('Please login to manage your anime list');
+        return;
+    }
+    
+    try {
+        const existingIndex = animeList.findIndex(item => item.id === media.id);
+        
+        if (existingIndex > -1) {
+            // Remove from anime list
+            const response = await fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                },
+                body: JSON.stringify({
+                    query: `
+                        mutation ($mediaId: Int) {
+                            DeleteMediaListEntry(mediaId: $mediaId) {
+                                deleted
                             }
-                        })
-                    });
-                    const data = await response.json();
-                    if (data.errors) {
-                        console.error('Error removing from anime list:', data.errors);
-                        showNotification('Failed to remove from anime list');
-                    } else {
-                        animeList.splice(existingIndex, 1);
-                        showNotification('Removed from anime list');
+                        }
+                    `,
+                    variables: {
+                        mediaId: media.id
                     }
-                } catch (error) {
-                    console.error('Error removing from anime list:', error);
-                    showNotification('Network error removing from anime list');
-                }
+                })
+            });
+            
+            const data = await response.json();
+            console.log('Delete response:', data); // Debug log
+            
+            if (data.errors) {
+                console.error('Error removing from anime list:', data.errors);
+                showNotification(`Failed to remove from anime list: ${data.errors[0].message}`);
             } else {
-                // Add to anime list
-                try {
-                    const response = await fetch('https://graphql.anilist.co', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
-                        },
-                        body: JSON.stringify({
-                            query: `
-                                mutation ($mediaId: Int, $status: MediaListStatus) {
-                                    SaveMediaListEntry(mediaId: $mediaId, status: $status, type: ANIME) {
-                                        id
-                                        status
-                                        progress
-                                        score
-                                    }
-                                }
-                            `,
-                            variables: {
-                                mediaId: media.id,
-                                status: 'PLANNING'
+                animeList.splice(existingIndex, 1);
+                showNotification('Removed from anime list');
+            }
+        } else {
+            // Add to anime list
+            const response = await fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                },
+                body: JSON.stringify({
+                    query: `
+                        mutation ($mediaId: Int, $status: MediaListStatus) {
+                            SaveMediaListEntry(mediaId: $mediaId, status: $status) {
+                                id
+                                status
+                                progress
+                                score
                             }
-                        })
-                    });
-                    const data = await response.json();
-                    if (data.errors) {
-                        console.error('Error adding to anime list:', data.errors);
-                        showNotification('Failed to add to anime list');
-                    } else {
-                        const animeItem = {
-                            id: media.id,
-                            title: media.title.english || media.title.romaji || 'Untitled',
-                            image: media.coverImage.large,
-                            type: 'anime',
-                            status: 'planning',
-                            score: media.averageScore ? (media.averageScore / 10).toFixed(1) : 0,
-                            progress: 0,
-                            maxProgress: media.episodes || 0,
-                            createdAt: new Date().toISOString()
-                        };
-                        animeList.push(animeItem);
-                        showNotification('Added to anime list!');
+                        }
+                    `,
+                    variables: {
+                        mediaId: media.id,
+                        status: 'PLANNING'
                     }
-                } catch (error) {
-                    console.error('Error adding to anime list:', error);
-                    showNotification('Network error adding to anime list');
-                }
-            }
+                })
+            });
             
-            // Update button in modal immediately
-            if (modal.style.display === 'block') {
-                const animeListBtn = document.getElementById('add-to-anime-list');
-                const isCurrentlyInAnimeList = animeList.some(item => item.id === media.id);
-                if (isCurrentlyInAnimeList) {
-                    animeListBtn.textContent = 'Remove from Anime List';
-                    animeListBtn.className = 'action-btn secondary';
-                } else {
-                    animeListBtn.textContent = 'Add to Anime List';
-                    animeListBtn.className = 'action-btn';
-                }
-            }
+            const data = await response.json();
+            console.log('Add response:', data); // Debug log
             
-            // Update profile stats
-            loadProfileStats();
-            updateStats();
+            if (data.errors) {
+                console.error('Error adding to anime list:', data.errors);
+                showNotification(`Failed to add to anime list: ${data.errors[0].message}`);
+            } else {
+                const animeItem = {
+                    id: media.id,
+                    title: media.title.english || media.title.romaji || 'Untitled',
+                    image: media.coverImage.large,
+                    type: 'anime',
+                    status: 'planning',
+                    score: 0,
+                    progress: 0,
+                    maxProgress: media.episodes || 0,
+                    createdAt: new Date().toISOString()
+                };
+                animeList.push(animeItem);
+                showNotification('Added to anime list!');
+            }
         }
+        
+        // Update UI
+        if (modal.style.display === 'block') {
+            const animeListBtn = document.getElementById('add-to-anime-list');
+            if (animeListBtn) {
+                const isInList = animeList.some(item => item.id === media.id);
+                animeListBtn.textContent = isInList ? 'Remove from Anime List' : 'Add to Anime List';
+                animeListBtn.className = isInList ? 'action-btn secondary' : 'action-btn';
+            }
+        }
+        
+        // Update stats
+        loadProfileStats();
+        updateStats();
+        loadListContent();
+        
+    } catch (error) {
+        console.error('Error in toggleAnimeList:', error);
+        showNotification('Network error. Please try again.');
+    }
+}
 
-        // Toggle manga list
-        async function toggleMangaList(media) {
-            if (!currentUser) {
-                showNotification('Please login to manage your manga list');
-                return;
-            }
-            
-            const existingIndex = mangaList.findIndex(item => item.id === media.id);
-            if (existingIndex > -1) {
-                // Remove from manga list
-                try {
-                    const response = await fetch('https://graphql.anilist.co', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
-                        },
-                        body: JSON.stringify({
-                            query: `
-                                mutation ($mediaId: Int) {
-                                    DeleteMediaListEntry(mediaId: $mediaId, type: MANGA) {
-                                        deleted
-                                    }
-                                }
-                            `,
-                            variables: {
-                                mediaId: media.id
+async function toggleMangaList(media) {
+    if (!currentUser) {
+        showNotification('Please login to manage your manga list');
+        return;
+    }
+    
+    try {
+        const existingIndex = mangaList.findIndex(item => item.id === media.id);
+        
+        if (existingIndex > -1) {
+            // Remove from manga list
+            const response = await fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                },
+                body: JSON.stringify({
+                    query: `
+                        mutation ($mediaId: Int) {
+                            DeleteMediaListEntry(mediaId: $mediaId) {
+                                deleted
                             }
-                        })
-                    });
-                    const data = await response.json();
-                    if (data.errors) {
-                        console.error('Error removing from manga list:', data.errors);
-                        showNotification('Failed to remove from manga list');
-                    } else {
-                        mangaList.splice(existingIndex, 1);
-                        showNotification('Removed from manga list');
+                        }
+                    `,
+                    variables: {
+                        mediaId: media.id
                     }
-                } catch (error) {
-                    console.error('Error removing from manga list:', error);
-                    showNotification('Network error removing from manga list');
-                }
+                })
+            });
+            
+            const data = await response.json();
+            console.log('Delete response:', data); // Debug log
+            
+            if (data.errors) {
+                console.error('Error removing from manga list:', data.errors);
+                showNotification(`Failed to remove from manga list: ${data.errors[0].message}`);
             } else {
-                // Add to manga list
-                try {
-                    const response = await fetch('https://graphql.anilist.co', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
-                        },
-                        body: JSON.stringify({
-                            query: `
-                                mutation ($mediaId: Int, $status: MediaListStatus) {
-                                    SaveMediaListEntry(mediaId: $mediaId, status: $status, type: MANGA) {
-                                        id
-                                        status
-                                        progress
-                                        score
-                                    }
-                                }
-                            `,
-                            variables: {
-                                mediaId: media.id,
-                                status: 'PLANNING'
+                mangaList.splice(existingIndex, 1);
+                showNotification('Removed from manga list');
+            }
+        } else {
+            // Add to manga list
+            const response = await fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('anilist_token')}`
+                },
+                body: JSON.stringify({
+                    query: `
+                        mutation ($mediaId: Int, $status: MediaListStatus) {
+                            SaveMediaListEntry(mediaId: $mediaId, status: $status) {
+                                id
+                                status
+                                progress
+                                score
                             }
-                        })
-                    });
-                    const data = await response.json();
-                    if (data.errors) {
-                        console.error('Error adding to manga list:', data.errors);
-                        showNotification('Failed to add to manga list');
-                    } else {
-                        const mangaItem = {
-                            id: media.id,
-                            title: media.title.english || media.title.romaji || 'Untitled',
-                            image: media.coverImage.large,
-                            type: 'manga',
-                            status: 'planning',
-                            score: media.averageScore ? (media.averageScore / 10).toFixed(1) : 0,
-                            progress: 0,
-                            maxProgress: media.chapters || 0,
-                            createdAt: new Date().toISOString()
-                        };
-                        mangaList.push(mangaItem);
-                        showNotification('Added to manga list!');
+                        }
+                    `,
+                    variables: {
+                        mediaId: media.id,
+                        status: 'PLANNING'
                     }
-                } catch (error) {
-                    console.error('Error adding to manga list:', error);
-                    showNotification('Network error adding to manga list');
-                }
-            }
+                })
+            });
             
-            // Update button in modal immediately
-            if (modal.style.display === 'block') {
-                const mangaListBtn = document.getElementById('add-to-manga-list');
-                const isCurrentlyInMangaList = mangaList.some(item => item.id === media.id);
-                if (isCurrentlyInMangaList) {
-                    mangaListBtn.textContent = 'Remove from Manga List';
-                    mangaListBtn.className = 'action-btn secondary';
-                } else {
-                    mangaListBtn.textContent = 'Add to Manga List';
-                    mangaListBtn.className = 'action-btn';
-                }
-            }
+            const data = await response.json();
+            console.log('Add response:', data); // Debug log
             
-            // Update profile stats
-            loadProfileStats();
-            updateStats();
+            if (data.errors) {
+                console.error('Error adding to manga list:', data.errors);
+                showNotification(`Failed to add to manga list: ${data.errors[0].message}`);
+            } else {
+                const mangaItem = {
+                    id: media.id,
+                    title: media.title.english || media.title.romaji || 'Untitled',
+                    image: media.coverImage.large,
+                    type: 'manga',
+                    status: 'planning',
+                    score: 0,
+                    progress: 0,
+                    maxProgress: media.chapters || 0,
+                    createdAt: new Date().toISOString()
+                };
+                mangaList.push(mangaItem);
+                showNotification('Added to manga list!');
+            }
         }
+        
+        // Update UI
+        if (modal.style.display === 'block') {
+            const mangaListBtn = document.getElementById('add-to-manga-list');
+            if (mangaListBtn) {
+                const isInList = mangaList.some(item => item.id === media.id);
+                mangaListBtn.textContent = isInList ? 'Remove from Manga List' : 'Add to Manga List';
+                mangaListBtn.className = isInList ? 'action-btn secondary' : 'action-btn';
+            }
+        }
+        
+        // Update stats
+        loadProfileStats();
+        updateStats();
+        loadListContent();
+        
+    } catch (error) {
+        console.error('Error in toggleMangaList:', error);
+        showNotification('Network error. Please try again.');
+    }
+}
 
         // Toggle favorite
         async function toggleFavorite(media) {

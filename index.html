@@ -1580,7 +1580,7 @@
         // Login user function
         function loginUser() {
             const clientId = '29049'; // Your actual Client ID from AniList
-            const redirectUri = encodeURIComponent('https://streamall-phi.vercel.app/'); // Exact match with AniList settings
+            const redirectUri = encodeURIComponent('https://fluffy-animehub.vercel.app/'); // Exact match with AniList settings
             const authUrl = `https://anilist.co/api/v2/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
             console.log('Redirecting to:', authUrl); // Debug line
             window.location.href = authUrl;

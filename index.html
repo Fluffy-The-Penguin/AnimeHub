@@ -983,7 +983,9 @@
     color: var(--light);
     padding: 8px;
 }
-
+.op{
+    color: black;
+}
 .status-select:focus {
     outline: none;
     border-color: var(--secondary);
@@ -2707,13 +2709,13 @@
                     </div>
                     <div class="list-filter-group">
                         <select id="list-status-filter" class="list-filter-select">
-                            <option value="all">All Statuses</option>
-                            <option value="planning">Planning</option>
-                            <option value="watching" class="anime-only">Watching</option>
-                            <option value="reading" class="manga-only">Reading</option>
-                            <option value="completed">Completed</option>
-                            <option value="paused">Paused</option>
-                            <option value="dropped">Dropped</option>
+                            <option value="all" class="op">All Statuses</option>
+                            <option value="planning" class="op">Planning</option>
+                            <option value="watching" class="anime-only op">Watching</option>
+                            <option value="reading" class="manga-only op">Reading</option>
+                            <option value="completed" class="op">Completed</option>
+                            <option value="paused" class="op">Paused</option>
+                            <option value="dropped" class="op">Dropped</option>
                         </select>
                     </div>
                 </div>

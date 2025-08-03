@@ -1280,6 +1280,7 @@
         let currentPage = 1;
         let totalPages = 1;
         let currentSearchTerm = '';
+        let currentStatusFilter = 'all';
         let currentUser = null;
         let genres = [];
         let animeList = [];
@@ -1287,6 +1288,7 @@
         let animeListFromApi = [];
         let mangaListFromApi = [];
         let favoritesList = [];
+        
         // DOM Elements
         const contentArea = document.getElementById('content-area');
         const searchInput = document.getElementById('search-input');
@@ -2815,15 +2817,21 @@
                 loadListContent();
             });
             // Tab switching
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentPage = 1; // Reset to first page when switching tabs
-                    updateStatusFilterOptions();
-                    loadListContent();
-                });
-            });
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentPage = 1; // Reset to first page when switching tabs
+        updateStatusFilterOptions();
+        loadListContent();
+        
+        // Also reset the pagination UI
+        const paginationContainer = document.getElementById('list-pagination');
+        if (paginationContainer) {
+            paginationContainer.innerHTML = '';
+        }
+    });
+});
             // Load initial list content
             loadListContent();
         }
@@ -2851,6 +2859,13 @@
             const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'anime';
             const searchTerm = document.getElementById('list-search')?.value.toLowerCase() || '';
             const statusFilter = document.getElementById('list-status-filter')?.value || 'all';
+
+            // Reset to page 1 if we have a new search term or status filter
+    if (searchTerm !== currentSearchTerm || statusFilter !== currentStatusFilter) {
+        currentPage = 1;
+        currentSearchTerm = searchTerm;
+        currentStatusFilter = statusFilter;
+    }
             
             // Use correct list based on tab
             const listItems = activeTab === 'anime' ? animeList : mangaList;

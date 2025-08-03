@@ -1737,16 +1737,17 @@
                 });
                 const animeData = await animeResponse.json();
                 if (animeData.data?.animeList) {
+                    animeListFromApi = animeData.data.animeList.lists.flatMap(list => list.entries);
                     animeList = animeListFromApi.map(entry => ({
-    id: entry.media.id,
-    title: entry.media.title.english || entry.media.title.romaji || 'Untitled',
-    image: entry.media.coverImage.large,
-    type: 'anime',
-    status: entry.status.toLowerCase() === 'current' ? 'watching' : entry.status.toLowerCase(),
-    score: entry.score,
-    progress: entry.progress,
-    maxProgress: entry.media.episodes || 0
-}));
+                        id: entry.media.id,
+                        title: entry.media.title.english || entry.media.title.romaji || 'Untitled',
+                        image: entry.media.coverImage.large,
+                        type: 'anime',
+                        status: entry.status.toLowerCase(),
+                        score: entry.score,
+                        progress: entry.progress,
+                        maxProgress: entry.media.episodes || 0
+                    }));
                 }
                 
                 // Fetch manga list
@@ -1790,16 +1791,17 @@
                 });
                 const mangaData = await mangaResponse.json();
                 if (mangaData.data?.mangaList) {
+                    mangaListFromApi = mangaData.data.mangaList.lists.flatMap(list => list.entries);
                     mangaList = mangaListFromApi.map(entry => ({
-    id: entry.media.id,
-    title: entry.media.title.english || entry.media.title.romaji || 'Untitled',
-    image: entry.media.coverImage.large,
-    type: 'manga',
-    status: entry.status.toLowerCase() === 'current' ? 'reading' : entry.status.toLowerCase(),
-    score: entry.score,
-    progress: entry.progress,
-    maxProgress: entry.media.chapters || 0
-}));
+                        id: entry.media.id,
+                        title: entry.media.title.english || entry.media.title.romaji || 'Untitled',
+                        image: entry.media.coverImage.large,
+                        type: 'manga',
+                        status: entry.status.toLowerCase(),
+                        score: entry.score,
+                        progress: entry.progress,
+                        maxProgress: entry.media.chapters || 0
+                    }));
                 }
                 
                 // Fetch favorites
@@ -3426,13 +3428,13 @@ async function updateStatus(id, type, newStatus) {
     try {
         // First convert the status to AniList's format
         const statusMap = {
-    'planning': 'PLANNING',
-    'watching': 'CURRENT',
-    'reading': 'CURRENT',
-    'completed': 'COMPLETED',
-    'paused': 'PAUSED',
-    'dropped': 'DROPPED'
-};
+            'planning': 'PLANNING',
+            'watching': 'CURRENT',
+            'reading': 'CURRENT',
+            'completed': 'COMPLETED',
+            'paused': 'PAUSED',
+            'dropped': 'DROPPED'
+        };
         
         const anilistStatus = statusMap[newStatus];
         if (!anilistStatus) {
